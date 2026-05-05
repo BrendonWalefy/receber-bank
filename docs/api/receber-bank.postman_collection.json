@@ -1,0 +1,378 @@
+{
+  "info": {
+    "name": "Receber Bank - Jornada de Boletos",
+    "_postman_id": "6d437cb8-3d62-4d41-bf9b-215c8745d3e6",
+    "description": "Colecao para demonstrar o case Receber Bank: criacao de boleto, registro externo simulado, estimulo de pagamento, validacao e consulta do read model.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "boleto_service_url",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "query_service_url",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "payment_service_url",
+      "value": "http://localhost:8083"
+    },
+    {
+      "key": "boleto_id",
+      "value": ""
+    },
+    {
+      "key": "codigo_barras",
+      "value": ""
+    },
+    {
+      "key": "linha_digitavel",
+      "value": ""
+    },
+    {
+      "key": "valor_boleto",
+      "value": "1500.75"
+    },
+    {
+      "key": "vencimento",
+      "value": ""
+    },
+    {
+      "key": "recebido_em",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Health checks",
+      "item": [
+        {
+          "name": "Boleto service health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{boleto_service_url}}/actuator/health",
+              "host": [
+                "{{boleto_service_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('boleto-service esta UP', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Query service health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{query_service_url}}/actuator/health",
+              "host": [
+                "{{query_service_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Payment service health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{payment_service_url}}/actuator/health",
+              "host": [
+                "{{payment_service_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - Jornada feliz",
+      "description": "Execute em ordem. Depois de criar o boleto, aguarde alguns segundos para o outbox publicar `boleto.gerado` e o payment-service registrar o boleto como aguardando pagamento.",
+      "item": [
+        {
+          "name": "Criar boleto PJ",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const vencimento = new Date();",
+                  "vencimento.setDate(vencimento.getDate() + 7);",
+                  "pm.collectionVariables.set('vencimento', vencimento.toISOString().slice(0, 10));",
+                  "pm.collectionVariables.set('valor_boleto', '1500.75');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('boleto criado', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('boleto_id', body.boletoId);",
+                  "pm.collectionVariables.set('codigo_barras', body.codigoBarras);",
+                  "pm.collectionVariables.set('linha_digitavel', body.linhaDigitavel);",
+                  "pm.collectionVariables.set('valor_boleto', String(body.valor));",
+                  "pm.collectionVariables.set('vencimento', body.vencimento);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"beneficiarioCpfCnpj\": \"12345678000199\",\n  \"beneficiarioNome\": \"Receber Bank PJ\",\n  \"beneficiarioBanco\": \"341\",\n  \"pagadorCpfCnpj\": \"98765432000188\",\n  \"pagadorNome\": \"Cliente PJ XPTO\",\n  \"pagadorEndereco\": \"Avenida Paulista, 1000 - Sao Paulo/SP\",\n  \"pagadorCep\": \"01310000\",\n  \"valor\": {{valor_boleto}},\n  \"vencimento\": \"{{vencimento}}\",\n  \"descricao\": \"Boleto de recebimento PJ - case arquitetura AWS\"\n}"
+            },
+            "url": {
+              "raw": "{{boleto_service_url}}/boletos",
+              "host": [
+                "{{boleto_service_url}}"
+              ],
+              "path": [
+                "boletos"
+              ]
+            },
+            "description": "Cliente PJ solicita ao banco a emissao de um boleto com valor e vencimento."
+          }
+        },
+        {
+          "name": "Consultar boleto no modelo de escrita",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{boleto_service_url}}/boletos/{{boleto_id}}",
+              "host": [
+                "{{boleto_service_url}}"
+              ],
+              "path": [
+                "boletos",
+                "{{boleto_id}}"
+              ]
+            },
+            "description": "Confirma o boleto criado no banco transacional do boleto-service."
+          }
+        },
+        {
+          "name": "Registrar boleto na registradora simulada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"boletoId\": \"{{boleto_id}}\",\n  \"codigoBarras\": \"{{codigo_barras}}\",\n  \"linhaDigitavel\": \"{{linha_digitavel}}\",\n  \"valor\": {{valor_boleto}},\n  \"vencimento\": \"{{vencimento}}\"\n}"
+            },
+            "url": {
+              "raw": "{{boleto_service_url}}/simulacoes/registradora/boletos",
+              "host": [
+                "{{boleto_service_url}}"
+              ],
+              "path": [
+                "simulacoes",
+                "registradora",
+                "boletos"
+              ]
+            },
+            "description": "Representa uma API externa de registradora bancaria/CIP/Nuclea para fins de apresentacao."
+          }
+        },
+        {
+          "name": "Simular pagamento aprovado",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('recebido_em', new Date().toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('pagamento aceito para processamento', function () {",
+                  "  pm.response.to.have.status(202);",
+                  "});",
+                  "pm.test('status efetivado', function () {",
+                  "  pm.expect(pm.response.json().status).to.eql('PAGAMENTO_EFETIVADO');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"boletoId\": \"{{boleto_id}}\",\n  \"valorPago\": {{valor_boleto}},\n  \"recebidoEm\": \"{{recebido_em}}\",\n  \"canal\": \"SIMULADOR_CLIENTE_PJ\"\n}"
+            },
+            "url": {
+              "raw": "{{payment_service_url}}/simulacoes/pagamentos",
+              "host": [
+                "{{payment_service_url}}"
+              ],
+              "path": [
+                "simulacoes",
+                "pagamentos"
+              ]
+            },
+            "description": "Simula a chegada de um pagamento externo valido, com valor integral e dentro do vencimento."
+          }
+        },
+        {
+          "name": "Consultar read model apos pagamento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{query_service_url}}/consultas/boletos/{{boleto_id}}",
+              "host": [
+                "{{query_service_url}}"
+              ],
+              "path": [
+                "consultas",
+                "boletos",
+                "{{boleto_id}}"
+              ]
+            },
+            "description": "Consulta a visao CQRS depois que `pagamento.efetivado` for consumido."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Cenário de rejeição",
+      "description": "Use depois de criar um novo boleto ou reutilize o boleto atual antes do pagamento aprovado. Demonstra divergencia de valor.",
+      "item": [
+        {
+          "name": "Simular pagamento rejeitado por valor divergente",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('recebido_em', new Date().toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('pagamento rejeitado por regra de negocio', function () {",
+                  "  pm.response.to.have.status(422);",
+                  "});",
+                  "pm.test('motivo de valor divergente', function () {",
+                  "  pm.expect(pm.response.json().motivo).to.eql('VALOR_PAGO_DIFERENTE_DO_VALOR_DO_BOLETO');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"boletoId\": \"{{boleto_id}}\",\n  \"valorPago\": 999.99,\n  \"recebidoEm\": \"{{recebido_em}}\",\n  \"canal\": \"SIMULADOR_CLIENTE_PJ\"\n}"
+            },
+            "url": {
+              "raw": "{{payment_service_url}}/simulacoes/pagamentos",
+              "host": [
+                "{{payment_service_url}}"
+              ],
+              "path": [
+                "simulacoes",
+                "pagamentos"
+              ]
+            },
+            "description": "Simula pagamento com valor diferente do valor original do boleto."
+          }
+        },
+        {
+          "name": "Listar boletos rejeitados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{query_service_url}}/consultas/boletos?status=PAGAMENTO_REJEITADO:VALOR_PAGO_DIFERENTE_DO_VALOR_DO_BOLETO",
+              "host": [
+                "{{query_service_url}}"
+              ],
+              "path": [
+                "consultas",
+                "boletos"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PAGAMENTO_REJEITADO:VALOR_PAGO_DIFERENTE_DO_VALOR_DO_BOLETO"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

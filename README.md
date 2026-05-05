@@ -24,6 +24,8 @@ Infraestrutura local:
 
 A documentacao navegavel do projeto fica em [`docs/index.html`](docs/index.html) e e publicada pelo GitHub Pages por meio do workflow [`pages.yml`](.github/workflows/pages.yml).
 
+As colecoes de demonstracao estao em [`docs/api`](docs/api): Postman e Insomnia.
+
 Depois de publicar no GitHub, habilite o Pages em:
 
 `Settings` -> `Pages` -> `Build and deployment` -> `GitHub Actions`
