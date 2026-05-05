@@ -1,0 +1,189 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980" role="img" aria-labelledby="title desc">
+  <title id="title">Arquitetura AWS do Receber Bank</title>
+  <desc id="desc">Desenho de solucao mostrando cliente, borda AWS, API Gateway, SQS, microservicos em EKS, RDS, ElastiCache, S3, MSK, observabilidade e seguranca.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f7f8fb; }
+      .band { fill: #ffffff; stroke: #d9deea; stroke-width: 2; }
+      .band-title { fill: #18202f; font: 700 22px Inter, Arial, sans-serif; }
+      .box { fill: #ffffff; stroke: #8aa4c2; stroke-width: 2; rx: 14; }
+      .box-green { fill: #effaf7; stroke: #0b6e69; }
+      .box-blue { fill: #eef5ff; stroke: #2867b2; }
+      .box-amber { fill: #fff8ea; stroke: #b7791f; }
+      .box-red { fill: #fff1f2; stroke: #be123c; }
+      .box-gray { fill: #f8fafc; stroke: #64748b; }
+      .service { fill: #ffffff; stroke: #0b6e69; stroke-width: 2; rx: 12; }
+      .data { fill: #f8fafc; stroke: #2867b2; stroke-width: 2; }
+      .text { fill: #18202f; font: 600 18px Inter, Arial, sans-serif; }
+      .small { fill: #5e6b80; font: 500 14px Inter, Arial, sans-serif; }
+      .tiny { fill: #5e6b80; font: 500 12px Inter, Arial, sans-serif; }
+      .arrow { stroke: #334155; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .event { stroke: #b7791f; stroke-width: 3; fill: none; marker-end: url(#arrow-amber); stroke-dasharray: 8 7; }
+      .ops { stroke: #64748b; stroke-width: 2.5; fill: none; marker-end: url(#arrow-gray); stroke-dasharray: 5 6; }
+    </style>
+    <marker id="arrow" markerWidth="13" markerHeight="13" refX="11" refY="6.5" orient="auto">
+      <path d="M 0 0 L 13 6.5 L 0 13 z" fill="#334155"/>
+    </marker>
+    <marker id="arrow-amber" markerWidth="13" markerHeight="13" refX="11" refY="6.5" orient="auto">
+      <path d="M 0 0 L 13 6.5 L 0 13 z" fill="#b7791f"/>
+    </marker>
+    <marker id="arrow-gray" markerWidth="13" markerHeight="13" refX="11" refY="6.5" orient="auto">
+      <path d="M 0 0 L 13 6.5 L 0 13 z" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1600" height="980"/>
+
+  <text x="64" y="58" class="band-title" style="font-size:32px">Receber Bank - Desenho de Solucao AWS</text>
+  <text x="64" y="88" class="small">Entrada resiliente, processamento em EKS, consistencia por transactional outbox, eventos em MSK e read model dedicado.</text>
+
+  <rect x="50" y="125" width="205" height="710" class="band" rx="18"/>
+  <text x="75" y="164" class="band-title">Cliente e Borda</text>
+
+  <rect x="295" y="125" width="235" height="710" class="band" rx="18"/>
+  <text x="320" y="164" class="band-title">Entrada AWS</text>
+
+  <rect x="570" y="125" width="455" height="710" class="band" rx="18"/>
+  <text x="595" y="164" class="band-title">EKS - Microservicos</text>
+
+  <rect x="1065" y="125" width="230" height="710" class="band" rx="18"/>
+  <text x="1090" y="164" class="band-title">Dados</text>
+
+  <rect x="1335" y="125" width="215" height="710" class="band" rx="18"/>
+  <text x="1360" y="164" class="band-title">Eventos e Ops</text>
+
+  <rect x="85" y="218" width="135" height="70" class="box box-green"/>
+  <text x="116" y="248" class="text">Cliente</text>
+  <text x="105" y="271" class="small">canal digital</text>
+
+  <rect x="85" y="348" width="135" height="70" class="box box-blue"/>
+  <text x="111" y="378" class="text">Route 53</text>
+  <text x="118" y="401" class="small">DNS</text>
+
+  <rect x="85" y="478" width="135" height="70" class="box box-blue"/>
+  <text x="101" y="508" class="text">CloudFront</text>
+  <text x="113" y="531" class="small">cache/TLS</text>
+
+  <rect x="85" y="608" width="135" height="70" class="box box-red"/>
+  <text x="126" y="638" class="text">WAF</text>
+  <text x="102" y="661" class="small">protecao</text>
+
+  <rect x="330" y="235" width="165" height="78" class="box box-blue"/>
+  <text x="362" y="266" class="text">API Gateway</text>
+  <text x="347" y="290" class="small">POST /boletos -> 202</text>
+
+  <rect x="330" y="382" width="165" height="78" class="box box-amber"/>
+  <text x="390" y="413" class="text">SQS</text>
+  <text x="350" y="437" class="small">boleto-generation</text>
+
+  <rect x="330" y="529" width="165" height="78" class="box box-red"/>
+  <text x="379" y="560" class="text">DLQ</text>
+  <text x="346" y="584" class="small">falhas de entrada</text>
+
+  <rect x="330" y="676" width="165" height="78" class="box box-blue"/>
+  <text x="367" y="707" class="text">ALB Ingress</text>
+  <text x="359" y="731" class="small">consultas HTTP</text>
+
+  <rect x="610" y="210" width="180" height="84" class="service"/>
+  <text x="641" y="243" class="text">boleto-service</text>
+  <text x="633" y="268" class="small">gera boleto + outbox</text>
+
+  <rect x="820" y="210" width="165" height="84" class="box box-amber"/>
+  <text x="855" y="243" class="text">Outbox</text>
+  <text x="841" y="268" class="small">publisher worker</text>
+
+  <rect x="610" y="382" width="180" height="84" class="service"/>
+  <text x="638" y="415" class="text">payment-service</text>
+  <text x="651" y="440" class="small">efetiva pagamento</text>
+
+  <rect x="820" y="382" width="165" height="84" class="service"/>
+  <text x="836" y="415" class="text">notification</text>
+  <text x="866" y="440" class="small">service</text>
+
+  <rect x="610" y="554" width="180" height="84" class="service"/>
+  <text x="655" y="587" class="text">query-service</text>
+  <text x="640" y="612" class="small">read model API</text>
+
+  <rect x="820" y="554" width="165" height="84" class="box box-gray"/>
+  <text x="845" y="587" class="text">Actuator</text>
+  <text x="840" y="612" class="small">health/metricas</text>
+
+  <rect x="1100" y="210" width="160" height="92" class="data" rx="12"/>
+  <text x="1136" y="244" class="text">RDS</text>
+  <text x="1121" y="269" class="small">PostgreSQL</text>
+  <text x="1114" y="291" class="tiny">write database</text>
+
+  <rect x="1100" y="368" width="160" height="92" class="data" rx="12"/>
+  <text x="1118" y="402" class="text">ElastiCache</text>
+  <text x="1144" y="427" class="small">Redis</text>
+  <text x="1117" y="449" class="tiny">idempotencia</text>
+
+  <rect x="1100" y="526" width="160" height="92" class="data" rx="12"/>
+  <text x="1136" y="560" class="text">RDS</text>
+  <text x="1121" y="585" class="small">PostgreSQL</text>
+  <text x="1122" y="607" class="tiny">read model</text>
+
+  <rect x="1100" y="684" width="160" height="92" class="data" rx="12"/>
+  <text x="1149" y="718" class="text">S3</text>
+  <text x="1118" y="743" class="small">PDFs/backups</text>
+
+  <rect x="1370" y="210" width="145" height="92" class="box box-amber"/>
+  <text x="1404" y="244" class="text">MSK</text>
+  <text x="1398" y="269" class="small">Kafka</text>
+  <text x="1388" y="291" class="tiny">event bus</text>
+
+  <rect x="1370" y="368" width="145" height="92" class="box box-gray"/>
+  <text x="1391" y="402" class="text">CloudWatch</text>
+  <text x="1393" y="427" class="small">logs/metricas</text>
+  <text x="1410" y="449" class="tiny">alertas</text>
+
+  <rect x="1370" y="526" width="145" height="92" class="box box-gray"/>
+  <text x="1388" y="560" class="text">X-Ray / OTel</text>
+  <text x="1408" y="585" class="small">tracing</text>
+
+  <rect x="1370" y="684" width="145" height="92" class="box box-red"/>
+  <text x="1398" y="718" class="text">Secrets</text>
+  <text x="1394" y="743" class="small">Manager</text>
+
+  <path d="M152 288 L152 348" class="arrow"/>
+  <path d="M152 418 L152 478" class="arrow"/>
+  <path d="M152 548 L152 608" class="arrow"/>
+  <path d="M220 643 C270 643 273 274 330 274" class="arrow"/>
+  <path d="M495 274 C540 274 560 252 610 252" class="arrow"/>
+  <path d="M412 313 L412 382" class="arrow"/>
+  <path d="M495 421 C540 421 555 252 610 252" class="arrow"/>
+  <path d="M412 460 L412 529" class="arrow"/>
+  <path d="M495 715 C550 715 560 596 610 596" class="arrow"/>
+
+  <path d="M790 252 L820 252" class="arrow"/>
+  <path d="M700 294 C700 332 700 342 700 382" class="event"/>
+  <path d="M790 424 L820 424" class="event"/>
+  <path d="M700 466 C700 510 700 516 700 554" class="event"/>
+  <path d="M790 596 L820 596" class="ops"/>
+
+  <path d="M790 252 C905 252 980 256 1100 256" class="arrow"/>
+  <path d="M790 246 C925 220 970 220 1100 256" class="arrow"/>
+  <path d="M790 264 C910 330 970 390 1100 414" class="arrow"/>
+  <path d="M790 596 C920 596 970 572 1100 572" class="arrow"/>
+  <path d="M790 276 C900 430 980 640 1100 730" class="ops"/>
+
+  <path d="M985 252 C1135 170 1260 170 1370 256" class="event"/>
+  <path d="M1370 256 C1230 333 1110 395 985 424" class="event"/>
+  <path d="M1370 256 C1228 444 950 535 790 596" class="event"/>
+  <path d="M790 424 C995 420 1190 310 1370 256" class="event"/>
+  <path d="M985 424 C1160 475 1250 512 1370 256" class="event"/>
+
+  <path d="M790 638 C1030 705 1210 450 1370 414" class="ops"/>
+  <path d="M985 596 C1135 630 1230 530 1370 572" class="ops"/>
+  <path d="M1370 730 C1210 790 1020 720 790 638" class="ops"/>
+
+  <rect x="64" y="872" width="1470" height="72" class="band" rx="14"/>
+  <text x="86" y="902" class="text">Legenda</text>
+  <line x1="185" y1="896" x2="250" y2="896" class="arrow"/>
+  <text x="266" y="902" class="small">fluxo sincrono / requisicao</text>
+  <line x1="505" y1="896" x2="570" y2="896" class="event"/>
+  <text x="586" y="902" class="small">evento de dominio</text>
+  <line x1="790" y1="896" x2="855" y2="896" class="ops"/>
+  <text x="871" y="902" class="small">observabilidade, operacao e seguranca</text>
+  <text x="86" y="928" class="tiny">Topicos principais: boleto.gerado, pagamento.efetivado, notificacao.enviada. A entrada AWS usa SQS para absorver picos e DLQ para mensagens com falha.</text>
+</svg>
