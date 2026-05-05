@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1120" viewBox="0 0 1800 1120" role="img" aria-labelledby="title desc">
   <title id="title">Whiteboard AWS - Receber Bank</title>
-  <desc id="desc">Arquitetura AWS do case Receber Bank com icones no estilo AWS para explicar entrada segura, SQS, EKS, RDS, Redis, MSK, S3, Secrets Manager, CloudWatch e observabilidade.</desc>
+  <desc id="desc">Arquitetura AWS do case Receber Bank com icones no estilo AWS para explicar entrada segura, SQS, EKS, registradora externa simulada, estimulo externo de pagamento, validacao de valor e vencimento, RDS, Redis, MSK, S3, Secrets Manager, CloudWatch e observabilidade.</desc>
   <defs>
     <style>
       .canvas { fill: #fbfbfd; }
@@ -29,6 +29,8 @@
       .thin { fill: none; stroke: #94a3b8; stroke-width: 2; }
       .badge { fill: #232f3e; rx: 9; }
       .badge-text { fill: #ffffff; font: 700 12px Inter, Arial, sans-serif; }
+      .decision { fill: #fff8ea; stroke: #b7791f; stroke-width: 3; rx: 14; }
+      .reject { fill: none; stroke: #be123c; stroke-width: 4; stroke-dasharray: 8 7; marker-end: url(#arrow-reject); }
     </style>
     <marker id="arrow" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto">
       <path d="M 0 0 L 14 7 L 0 14 z" fill="#26364c"/>
@@ -38,6 +40,9 @@
     </marker>
     <marker id="arrow-ops" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto">
       <path d="M 0 0 L 14 7 L 0 14 z" fill="#64748b"/>
+    </marker>
+    <marker id="arrow-reject" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto">
+      <path d="M 0 0 L 14 7 L 0 14 z" fill="#be123c"/>
     </marker>
 
     <g id="aws-logo">
@@ -119,20 +124,26 @@
       <circle cx="55" cy="38" r="5" fill="#147eba"/>
       <circle cx="37" cy="51" r="5" fill="#147eba"/>
     </g>
+
+    <g id="partner">
+      <rect x="8" y="12" width="58" height="52" rx="10" fill="#fff8ea" stroke="#b7791f" stroke-width="4"/>
+      <path d="M18 52 V32 L37 21 L56 32 V52" fill="none" stroke="#b7791f" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M27 52 V40 H47 V52" fill="none" stroke="#b7791f" stroke-width="4"/>
+    </g>
   </defs>
 
   <rect width="1800" height="1120" class="canvas"/>
   <use href="#aws-logo" x="60" y="42"/>
   <text x="155" y="70" class="heading">Receber Bank - Whiteboard AWS</text>
-  <text x="155" y="100" class="subheading">Case para apresentar escolhas de arquitetura: resiliencia, desacoplamento, consistencia, consulta rapida, seguranca e operacao.</text>
+  <text x="155" y="100" class="subheading">Case para apresentar escolhas de arquitetura: emissao de boleto, registro externo simulado, pagamento recebido por estimulo externo, validacao, eventos e operacao.</text>
 
   <rect x="60" y="145" width="330" height="780" class="zone"/>
   <text x="88" y="184" class="zone-title">1. Borda segura</text>
   <text x="88" y="211" class="note">Protege e controla entrada publica.</text>
 
   <rect x="430" y="145" width="330" height="780" class="zone-alt"/>
-  <text x="458" y="184" class="zone-title">2. Entrada resiliente</text>
-  <text x="458" y="211" class="note">Absorve pico e desacopla criacao.</text>
+  <text x="458" y="184" class="zone-title">2. Entradas e externos</text>
+  <text x="458" y="211" class="note">Desacopla criacao e simula bordas externas.</text>
 
   <rect x="800" y="145" width="430" height="780" class="zone"/>
   <text x="828" y="184" class="zone-title">3. EKS - servicos</text>
@@ -181,6 +192,16 @@
   <text x="570" y="692" class="svc-title">ALB Ingress</text>
   <text x="570" y="718" class="svc-sub">consulta publica segura</text>
 
+  <rect x="467" y="560" width="230" height="72" class="icon-card"/>
+  <use href="#partner" x="482" y="558"/>
+  <text x="570" y="589" class="svc-title">Registradora fake</text>
+  <text x="570" y="613" class="svc-sub">CIP/Nuclea simulada</text>
+
+  <rect x="467" y="770" width="230" height="72" class="icon-card"/>
+  <use href="#api" x="482" y="768"/>
+  <text x="570" y="799" class="svc-title">Estimulo pagamento</text>
+  <text x="570" y="823" class="svc-sub">retorno/webhook/CNAB</text>
+
   <rect x="842" y="275" width="270" height="96" class="icon-card"/>
   <use href="#container" x="858" y="287"/>
   <text x="948" y="317" class="svc-title">boleto-service</text>
@@ -189,12 +210,15 @@
   <rect x="842" y="430" width="270" height="96" class="icon-card"/>
   <use href="#container" x="858" y="442"/>
   <text x="948" y="472" class="svc-title">payment-service</text>
-  <text x="948" y="498" class="svc-sub">consome boleto.gerado</text>
+  <text x="948" y="498" class="svc-sub">aguarda e valida pagamento</text>
 
-  <rect x="842" y="585" width="270" height="96" class="icon-card"/>
-  <use href="#container" x="858" y="597"/>
-  <text x="948" y="627" class="svc-title">notification-service</text>
-  <text x="948" y="653" class="svc-sub">notifica cliente/parceiro</text>
+  <rect x="842" y="530" width="270" height="40" class="decision"/>
+  <text x="866" y="555" class="svc-sub">valor integral + dentro do vencimento?</text>
+
+  <rect x="842" y="615" width="270" height="96" class="icon-card"/>
+  <use href="#container" x="858" y="627"/>
+  <text x="948" y="657" class="svc-title">notification-service</text>
+  <text x="948" y="683" class="svc-sub">notifica sucesso/rejeicao</text>
 
   <rect x="842" y="740" width="270" height="96" class="icon-card"/>
   <use href="#container" x="858" y="752"/>
@@ -250,7 +274,9 @@
   <path d="M327 708 C385 708 407 361 467 348" class="path"/>
   <path d="M697 348 C760 348 775 323 842 323" class="path"/>
   <path d="M582 396 C582 420 582 430 582 450" class="path"/>
+  <path d="M697 596 C760 596 775 330 842 323" class="path"/>
   <path d="M697 698 C760 698 775 788 842 788" class="path"/>
+  <path d="M697 806 C760 806 775 478 842 478" class="path"/>
 
   <path d="M1112 323 C1180 323 1230 323 1300 323" class="path"/>
   <path d="M1112 323 C1190 365 1225 430 1300 478" class="path"/>
@@ -259,12 +285,19 @@
 
   <path d="M1112 323 C1245 210 1435 210 1558 323" class="event"/>
   <path d="M1558 323 C1415 410 1260 455 1112 478" class="event"/>
-  <path d="M1558 323 C1420 512 1260 612 1112 633" class="event"/>
+  <path d="M1112 550 C1240 510 1415 392 1558 323" class="event"/>
+  <path d="M1112 550 C1260 575 1430 620 1558 323" class="reject"/>
+  <path d="M1558 323 C1420 512 1260 642 1112 663" class="event"/>
   <path d="M1558 323 C1430 650 1260 780 1112 788" class="event"/>
 
   <path d="M1112 323 C1300 395 1425 448 1558 478" class="ops"/>
   <path d="M1112 478 C1310 525 1425 605 1558 633" class="ops"/>
   <path d="M1558 788 C1370 900 1100 860 912 836" class="ops"/>
+
+  <rect x="1218" y="238" width="260" height="74" class="aws-gray" rx="14"/>
+  <text x="1240" y="264" class="note-title">Eventos da nova jornada</text>
+  <text x="1240" y="288" class="note">boleto.gerado -> pagamento.efetivado</text>
+  <text x="1240" y="306" class="note">ou pagamento.rejeitado</text>
 
   <rect x="80" y="960" width="380" height="112" class="aws-gray" rx="18"/>
   <text x="108" y="994" class="note-title">Por que API Gateway + SQS?</text>
@@ -281,8 +314,8 @@
   <rect x="920" y="960" width="380" height="112" class="aws-gray" rx="18"/>
   <text x="948" y="994" class="note-title">Por que Outbox + MSK?</text>
   <text x="948" y="1022" class="note">O boleto e o evento nascem na mesma transacao.</text>
-  <text x="948" y="1045" class="note">Depois o MSK distribui eventos para pagamento,</text>
-  <text x="948" y="1068" class="note">notificacao e consulta com baixo acoplamento.</text>
+  <text x="948" y="1045" class="note">Pagamento nao nasce automaticamente: vem de</text>
+  <text x="948" y="1068" class="note">estimulo externo e publica sucesso ou rejeicao.</text>
 
   <rect x="1340" y="960" width="380" height="112" class="aws-gray" rx="18"/>
   <text x="1368" y="994" class="note-title">Por que CQRS e observabilidade?</text>
@@ -293,7 +326,7 @@
   <rect x="72" y="118" width="64" height="20" class="badge"/>
   <text x="88" y="132" class="badge-text">Public</text>
   <rect x="443" y="118" width="76" height="20" class="badge"/>
-  <text x="457" y="132" class="badge-text">Async</text>
+  <text x="457" y="132" class="badge-text">External</text>
   <rect x="813" y="118" width="102" height="20" class="badge"/>
   <text x="827" y="132" class="badge-text">Compute</text>
   <rect x="1283" y="118" width="72" height="20" class="badge"/>
