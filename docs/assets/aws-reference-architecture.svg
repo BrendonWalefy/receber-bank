@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1680" height="980" viewBox="0 0 1680 980" role="img" aria-labelledby="title desc">
-  <title id="title">Receber Bank - Arquitetura AWS para entrevista</title>
+  <title id="title">Receber Bank - Arquitetura AWS de referencia</title>
   <desc id="desc">Diagrama enxuto da arquitetura AWS do Receber Bank, mostrando borda segura, entrada assincrona, microservicos em EKS, dados, eventos, observabilidade e metodologias arquiteturais.</desc>
   <defs>
     <style>
@@ -84,7 +84,7 @@
   </defs>
 
   <rect width="1680" height="980" class="bg"/>
-  <text x="56" y="64" class="title">Receber Bank - Arquitetura AWS para entrevista</text>
+  <text x="56" y="64" class="title">Receber Bank - Arquitetura AWS de referencia</text>
   <text x="56" y="96" class="subtitle">Fluxo enxuto: emitir boleto, registrar externamente, aguardar pagamento real/simulado, validar, publicar eventos e consultar o read model.</text>
 
   <rect x="50" y="135" width="250" height="545" class="lane"/>
@@ -219,7 +219,7 @@
   <path d="M1375 625 C1240 715 1050 695 820 666" class="ops"/>
 
   <rect x="56" y="720" width="1568" height="205" class="lane"/>
-  <text x="86" y="760" class="h">Roteiro para explicar na entrevista</text>
+  <text x="86" y="760" class="h">Roteiro de explicacao arquitetural</text>
 
   <rect x="86" y="785" width="220" height="104" class="box box-gray"/>
   <text x="110" y="814" class="label">DDD / Dominios</text>
