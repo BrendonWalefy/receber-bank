@@ -1,264 +1,514 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="980" viewBox="0 0 1680 980" role="img" aria-labelledby="title desc">
-  <title id="title">Receber Bank - Arquitetura AWS de referencia</title>
-  <desc id="desc">Diagrama enxuto da arquitetura AWS do Receber Bank, mostrando borda segura, entrada assincrona, microservicos em EKS, dados, eventos, observabilidade e metodologias arquiteturais.</desc>
-  <defs>
-    <style>
-      .bg { fill: #f7f8fb; }
-      .title { fill: #172033; font: 800 34px Inter, Arial, sans-serif; }
-      .subtitle { fill: #526173; font: 500 17px Inter, Arial, sans-serif; }
-      .lane { fill: #ffffff; stroke: #d8dfeb; stroke-width: 2; rx: 20; }
-      .lane-soft { fill: #f6fbff; stroke: #bed2eb; stroke-width: 2; rx: 20; }
-      .lane-green { fill: #f7fff9; stroke: #b8dec3; stroke-width: 2; rx: 20; }
-      .lane-amber { fill: #fffaf1; stroke: #e5c982; stroke-width: 2; rx: 20; }
-      .box { fill: #ffffff; stroke: #cfd8e6; stroke-width: 2; rx: 14; }
-      .box-blue { fill: #eef6ff; stroke: #147eba; }
-      .box-green { fill: #effaf7; stroke: #17865a; }
-      .box-orange { fill: #fff8ea; stroke: #b7791f; }
-      .box-red { fill: #fff1f2; stroke: #be123c; }
-      .box-gray { fill: #f8fafc; stroke: #64748b; }
-      .h { fill: #172033; font: 800 20px Inter, Arial, sans-serif; }
-      .label { fill: #172033; font: 700 17px Inter, Arial, sans-serif; }
-      .small { fill: #5d6b82; font: 500 13px Inter, Arial, sans-serif; }
-      .tiny { fill: #64748b; font: 600 11px Inter, Arial, sans-serif; }
-      .pill { fill: #232f3e; rx: 11; }
-      .pill-text { fill: #ffffff; font: 700 12px Inter, Arial, sans-serif; }
-      .arrow { fill: none; stroke: #26364c; stroke-width: 4; marker-end: url(#arrow); }
-      .event { fill: none; stroke: #b7791f; stroke-width: 4; stroke-dasharray: 10 8; marker-end: url(#arrow-orange); }
-      .reject { fill: none; stroke: #be123c; stroke-width: 4; stroke-dasharray: 8 7; marker-end: url(#arrow-red); }
-      .ops { fill: none; stroke: #64748b; stroke-width: 3; stroke-dasharray: 6 7; marker-end: url(#arrow-gray); }
-      .line { stroke: #94a3b8; stroke-width: 2; fill: none; }
-    </style>
-    <marker id="arrow" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto">
-      <path d="M0 0 L14 7 L0 14 Z" fill="#26364c"/>
-    </marker>
-    <marker id="arrow-orange" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto">
-      <path d="M0 0 L14 7 L0 14 Z" fill="#b7791f"/>
-    </marker>
-    <marker id="arrow-red" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto">
-      <path d="M0 0 L14 7 L0 14 Z" fill="#be123c"/>
-    </marker>
-    <marker id="arrow-gray" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto">
-      <path d="M0 0 L14 7 L0 14 Z" fill="#64748b"/>
-    </marker>
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="970" viewBox="0 0 1800 970" role="img" aria-labelledby="diag-title diag-desc">
+  <title id="diag-title">Receber Bank — Arquitetura AWS de Referência</title>
+  <desc id="diag-desc">Diagrama de arquitetura AWS mostrando borda segura, entrada assíncrona via SQS, microsserviços em EKS (boleto, payment, query, notification), RDS, ElastiCache, Amazon MSK, CloudWatch e Secrets Manager. Padrões: DDD, CQRS, Transactional Outbox, Event-Driven.</desc>
 
-    <g id="icon-api">
-      <rect x="8" y="10" width="54" height="48" rx="10" fill="#eef6ff" stroke="#147eba" stroke-width="4"/>
-      <path d="M21 26 L14 35 L21 44 M49 26 L56 35 L49 44" fill="none" stroke="#147eba" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M31 48 L40 22" stroke="#147eba" stroke-width="4" stroke-linecap="round"/>
-    </g>
-    <g id="icon-shield">
-      <path d="M35 6 L60 16 V34 C60 51 49 64 35 70 C21 64 10 51 10 34 V16 Z" fill="#fff1f2" stroke="#be123c" stroke-width="4"/>
-      <path d="M23 37 L32 46 L49 27" fill="none" stroke="#be123c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-    </g>
-    <g id="icon-queue">
-      <rect x="8" y="12" width="54" height="48" rx="10" fill="#fff8ea" stroke="#b7791f" stroke-width="4"/>
-      <path d="M20 25 H50 M20 36 H50 M20 47 H42" stroke="#b7791f" stroke-width="5" stroke-linecap="round"/>
-    </g>
-    <g id="icon-container">
-      <rect x="8" y="12" width="54" height="48" rx="9" fill="#effaf7" stroke="#17865a" stroke-width="4"/>
-      <path d="M19 25 H52 M19 36 H52 M19 47 H52" stroke="#17865a" stroke-width="4" stroke-linecap="round"/>
-      <path d="M29 14 V60 M43 14 V60" stroke="#17865a" stroke-width="3" opacity=".55"/>
-    </g>
-    <g id="icon-db">
-      <ellipse cx="35" cy="17" rx="28" ry="10" fill="#eef6ff" stroke="#147eba" stroke-width="4"/>
-      <path d="M7 17 V56 C7 62 20 68 35 68 C50 68 63 62 63 56 V17" fill="#eef6ff" stroke="#147eba" stroke-width="4"/>
-      <path d="M7 37 C7 43 20 49 35 49 C50 49 63 43 63 37" class="line"/>
-    </g>
-    <g id="icon-stream">
-      <rect x="8" y="12" width="54" height="48" rx="12" fill="#fff8ea" stroke="#b7791f" stroke-width="4"/>
-      <path d="M18 47 C28 25, 42 25, 52 47" fill="none" stroke="#b7791f" stroke-width="5" stroke-linecap="round"/>
-      <circle cx="18" cy="47" r="5" fill="#b7791f"/>
-      <circle cx="35" cy="30" r="5" fill="#b7791f"/>
-      <circle cx="52" cy="47" r="5" fill="#b7791f"/>
-    </g>
-    <g id="icon-monitor">
-      <rect x="8" y="13" width="54" height="40" rx="8" fill="#f8fafc" stroke="#64748b" stroke-width="4"/>
-      <path d="M18 41 L28 31 L37 37 L52 23" fill="none" stroke="#64748b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M27 65 H43 M35 53 V65" stroke="#64748b" stroke-width="4" stroke-linecap="round"/>
-    </g>
-    <g id="icon-partner">
-      <rect x="8" y="12" width="54" height="48" rx="10" fill="#fff8ea" stroke="#b7791f" stroke-width="4"/>
-      <path d="M17 50 V31 L35 20 L53 31 V50" fill="none" stroke="#b7791f" stroke-width="4" stroke-linejoin="round"/>
-      <path d="M27 50 V39 H43 V50" fill="none" stroke="#b7791f" stroke-width="4"/>
-    </g>
+  <defs>
+    <!-- ── Arrowhead markers ── -->
+    <marker id="mh"  viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10z" fill="#445566"/></marker>
+    <marker id="mhe" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10z" fill="#E7157B"/></marker>
+    <marker id="mhr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10z" fill="#DD344C"/></marker>
+    <marker id="mhg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10z" fill="#7B8EA0"/></marker>
+
+    <!-- ── AWS Service Icons (36×36 viewBox) ── -->
+
+    <!-- Route 53 — purple globe -->
+    <symbol id="i-r53" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#8C4FFF"/>
+      <circle cx="18" cy="18" r="10" fill="none" stroke="white" stroke-width="1.8"/>
+      <ellipse cx="18" cy="18" rx="5" ry="10" fill="none" stroke="white" stroke-width="1.4"/>
+      <line x1="8" y1="18" x2="28" y2="18" stroke="white" stroke-width="1.4"/>
+      <line x1="9.5" y1="13" x2="26.5" y2="13" stroke="white" stroke-width="1"/>
+      <line x1="9.5" y1="23" x2="26.5" y2="23" stroke="white" stroke-width="1"/>
+    </symbol>
+
+    <!-- CloudFront — purple CDN -->
+    <symbol id="i-cf" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#8C4FFF"/>
+      <circle cx="18" cy="18" r="10" fill="none" stroke="white" stroke-width="1.8"/>
+      <line x1="18" y1="8" x2="18" y2="28" stroke="white" stroke-width="1.4"/>
+      <line x1="8"  y1="18" x2="28" y2="18" stroke="white" stroke-width="1.4"/>
+      <path d="M10.5 12 Q18 16.5 25.5 12" fill="none" stroke="white" stroke-width="1.2"/>
+      <path d="M10.5 24 Q18 19.5 25.5 24" fill="none" stroke="white" stroke-width="1.2"/>
+    </symbol>
+
+    <!-- WAF — red shield -->
+    <symbol id="i-waf" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#DD344C"/>
+      <path d="M18 6 L29 11 V21 C29 27.5 24 33 18 35 C12 33 7 27.5 7 21 V11 Z" fill="none" stroke="white" stroke-width="2"/>
+      <path d="M13.5 19 L17 22.5 L24 14.5" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- API Gateway — purple brackets -->
+    <symbol id="i-apigw" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#A166FF"/>
+      <path d="M12 12 L7 18 L12 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M24 12 L29 18 L24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="20" y1="10" x2="16" y2="26" stroke="white" stroke-width="2.4" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- SQS — pink queue -->
+    <symbol id="i-sqs" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#E7157B"/>
+      <rect x="6" y="10" width="24" height="4.5" rx="2.2" fill="white"/>
+      <rect x="6" y="17.5" width="24" height="4.5" rx="2.2" fill="white"/>
+      <rect x="6" y="25" width="16" height="4.5" rx="2.2" fill="white"/>
+      <path d="M26 26.5 L31 28.5 L26 30.5" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- EKS — orange Kubernetes -->
+    <symbol id="i-eks" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#FF9900"/>
+      <circle cx="18" cy="18" r="8" fill="none" stroke="white" stroke-width="1.8"/>
+      <circle cx="18" cy="18" r="2.5" fill="white"/>
+      <g stroke="white" stroke-width="1.8" stroke-linecap="round">
+        <line x1="18" y1="8"  x2="18" y2="12.5"/>
+        <line x1="18" y1="23.5" x2="18" y2="28"/>
+        <line x1="8"  y1="18" x2="12.5" y2="18"/>
+        <line x1="23.5" y1="18" x2="28" y2="18"/>
+        <line x1="11.2" y1="11.2" x2="14.4" y2="14.4"/>
+        <line x1="21.6" y1="21.6" x2="24.8" y2="24.8"/>
+        <line x1="24.8" y1="11.2" x2="21.6" y2="14.4"/>
+        <line x1="14.4" y1="21.6" x2="11.2" y2="24.8"/>
+      </g>
+    </symbol>
+
+    <!-- Pod/Service — orange 4 squares -->
+    <symbol id="i-pod" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#FF9900"/>
+      <rect x="4"  y="4"  width="12" height="12" rx="2" fill="white"/>
+      <rect x="20" y="4"  width="12" height="12" rx="2" fill="white"/>
+      <rect x="4"  y="20" width="12" height="12" rx="2" fill="white"/>
+      <rect x="20" y="20" width="12" height="12" rx="2" fill="white"/>
+    </symbol>
+
+    <!-- Outbox Worker — orange gear -->
+    <symbol id="i-gear" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#FF9900"/>
+      <circle cx="18" cy="18" r="5" fill="none" stroke="white" stroke-width="1.8"/>
+      <circle cx="18" cy="18" r="1.8" fill="white"/>
+      <g stroke="white" stroke-width="1.8" stroke-linecap="round">
+        <line x1="18" y1="7"  x2="18" y2="11"/>
+        <line x1="18" y1="25" x2="18" y2="29"/>
+        <line x1="7"  y1="18" x2="11" y2="18"/>
+        <line x1="25" y1="18" x2="29" y2="18"/>
+        <line x1="10.3" y1="10.3" x2="13.1" y2="13.1"/>
+        <line x1="22.9" y1="22.9" x2="25.7" y2="25.7"/>
+        <line x1="25.7" y1="10.3" x2="22.9" y2="13.1"/>
+        <line x1="13.1" y1="22.9" x2="10.3" y2="25.7"/>
+      </g>
+    </symbol>
+
+    <!-- RDS — indigo cylinder -->
+    <symbol id="i-rds" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#4D27AA"/>
+      <ellipse cx="18" cy="12" rx="10" ry="4" fill="white"/>
+      <rect x="8" y="12" width="20" height="13" fill="white"/>
+      <ellipse cx="18" cy="25" rx="10" ry="4" fill="#C4B0E8"/>
+      <ellipse cx="18" cy="25" rx="10" ry="4" fill="none" stroke="white" stroke-width="1.4"/>
+      <line x1="8"  y1="12" x2="8"  y2="25" stroke="#4D27AA" stroke-width="0.8"/>
+      <line x1="28" y1="12" x2="28" y2="25" stroke="#4D27AA" stroke-width="0.8"/>
+    </symbol>
+
+    <!-- ElastiCache — indigo lightning -->
+    <symbol id="i-elasticache" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#4D27AA"/>
+      <path d="M20 6 L12 20 L18 20 L16 30 L24 16 L18 16 Z" fill="white"/>
+    </symbol>
+
+    <!-- S3 — green hexabox -->
+    <symbol id="i-s3" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#569A31"/>
+      <polygon points="18,6 30,13 30,25 18,32 6,25 6,13" fill="none" stroke="white" stroke-width="1.8"/>
+      <line x1="6"  y1="13" x2="18" y2="20" stroke="white" stroke-width="1.4"/>
+      <line x1="30" y1="13" x2="18" y2="20" stroke="white" stroke-width="1.4"/>
+      <line x1="18" y1="20" x2="18" y2="32" stroke="white" stroke-width="1.4"/>
+    </symbol>
+
+    <!-- MSK — pink distributed mesh -->
+    <symbol id="i-msk" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#E7157B"/>
+      <circle cx="18" cy="18" r="4" fill="white"/>
+      <circle cx="9"  cy="10" r="3" fill="white"/>
+      <circle cx="27" cy="10" r="3" fill="white"/>
+      <circle cx="9"  cy="26" r="3" fill="white"/>
+      <circle cx="27" cy="26" r="3" fill="white"/>
+      <g stroke="white" stroke-width="1.5">
+        <line x1="9"  y1="10" x2="18" y2="18"/>
+        <line x1="27" y1="10" x2="18" y2="18"/>
+        <line x1="9"  y1="26" x2="18" y2="18"/>
+        <line x1="27" y1="26" x2="18" y2="18"/>
+      </g>
+    </symbol>
+
+    <!-- CloudWatch — pink chart -->
+    <symbol id="i-cw" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#E7157B"/>
+      <rect x="5" y="7" width="26" height="17" rx="3" fill="none" stroke="white" stroke-width="1.8"/>
+      <path d="M10 21 L15 15 L19 18.5 L25 11" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="12" y1="29" x2="24" y2="29" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <line x1="18" y1="24" x2="18" y2="29" stroke="white" stroke-width="2"/>
+    </symbol>
+
+    <!-- X-Ray — pink traces -->
+    <symbol id="i-xray" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#E7157B"/>
+      <line x1="6"  y1="12" x2="30" y2="12" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="6"  y1="19" x2="22" y2="19" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="6"  y1="26" x2="27" y2="26" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="22" cy="19" r="2.5" fill="white"/>
+      <circle cx="27" cy="26" r="2.5" fill="white"/>
+      <circle cx="30" cy="12" r="2.5" fill="white"/>
+    </symbol>
+
+    <!-- Secrets Manager — red lock -->
+    <symbol id="i-secrets" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#DD344C"/>
+      <rect x="10" y="18" width="16" height="12" rx="2" fill="white"/>
+      <path d="M14 18 L14 13.5 A4.5 4.5 0 0 1 22 13.5 L22 18" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round"/>
+      <circle cx="18" cy="24" r="2.2" fill="#DD344C"/>
+    </symbol>
+
+    <!-- ECR — orange container registry -->
+    <symbol id="i-ecr" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#FF9900"/>
+      <rect x="6" y="11" width="24" height="16" rx="3" fill="none" stroke="white" stroke-width="1.8"/>
+      <line x1="6" y1="18" x2="30" y2="18" stroke="white" stroke-width="1.4"/>
+      <circle cx="11" cy="14.5" r="1.4" fill="white"/>
+      <circle cx="16" cy="14.5" r="1.4" fill="white"/>
+      <rect x="10" y="21" width="16" height="4" rx="1" fill="white"/>
+    </symbol>
+
+    <!-- SNS — pink bell -->
+    <symbol id="i-sns" viewBox="0 0 36 36">
+      <rect width="36" height="36" rx="6" fill="#E7157B"/>
+      <path d="M13 22 L13 16 A5 5 0 0 1 23 16 L23 22 L27 25 L9 25 Z" fill="none" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+      <line x1="9" y1="25" x2="27" y2="25" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M15.5 25 A2.5 2.5 0 0 0 20.5 25" fill="none" stroke="white" stroke-width="1.8"/>
+      <circle cx="18" cy="10" r="1.8" fill="white"/>
+    </symbol>
+
   </defs>
 
-  <rect width="1680" height="980" class="bg"/>
-  <text x="56" y="64" class="title">Receber Bank - Arquitetura AWS de referencia</text>
-  <text x="56" y="96" class="subtitle">Fluxo enxuto: emitir boleto, registrar externamente, aguardar pagamento real/simulado, validar, publicar eventos e consultar o read model.</text>
+  <!-- ═══════════════════════════════════════════════════
+       BACKGROUND
+  ═══════════════════════════════════════════════════ -->
+  <rect width="1800" height="970" fill="#FFFFFF"/>
 
-  <rect x="50" y="135" width="250" height="545" class="lane"/>
-  <text x="78" y="172" class="h">Borda segura</text>
-  <text x="78" y="197" class="small">Entrada publica controlada</text>
+  <!-- ═══════════════════════════════════════════════════
+       TITLE
+  ═══════════════════════════════════════════════════ -->
+  <text x="30" y="36" font-family="Inter,'Amazon Ember',Arial,sans-serif" font-size="22" font-weight="700" fill="#16191F">Receber Bank — Arquitetura AWS de Referência</text>
+  <text x="30" y="57" font-family="Inter,'Amazon Ember',Arial,sans-serif" font-size="13" fill="#545B64">Java 21 · Spring Boot · EKS · Amazon MSK · RDS PostgreSQL · DDD · CQRS · Transactional Outbox · Event-Driven Architecture</text>
 
-  <rect x="335" y="135" width="260" height="545" class="lane-soft"/>
-  <text x="363" y="172" class="h">Entrada resiliente</text>
-  <text x="363" y="197" class="small">Desacoplamento e retries</text>
+  <!-- ═══════════════════════════════════════════════════
+       AWS CLOUD BOUNDARY
+  ═══════════════════════════════════════════════════ -->
+  <rect x="134" y="70" width="1652" height="800" rx="8" fill="none" stroke="#AAB7C4" stroke-width="1.5" stroke-dasharray="8,4"/>
+  <rect x="144" y="73" width="26" height="15" rx="3" fill="#FF9900"/>
+  <text x="149" y="85" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="white">AWS</text>
+  <text x="174" y="85" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#545B64">Cloud</text>
 
-  <rect x="630" y="135" width="390" height="545" class="lane"/>
-  <text x="658" y="172" class="h">EKS - Dominios</text>
-  <text x="658" y="197" class="small">Microservicos por capacidade</text>
+  <!-- ═══════════════════════════════════════════════════
+       VPC BOUNDARY
+  ═══════════════════════════════════════════════════ -->
+  <rect x="344" y="88" width="908" height="772" rx="6" fill="#EEF2FF" fill-opacity="0.45" stroke="#5B8DEF" stroke-width="1.4" stroke-dasharray="7,4"/>
+  <text x="356" y="104" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#5B8DEF" letter-spacing="0.3">VPC — us-east-1 · Private Subnet</text>
 
-  <rect x="1055" y="135" width="250" height="545" class="lane-green"/>
-  <text x="1083" y="172" class="h">Dados</text>
-  <text x="1083" y="197" class="small">Estado transacional e leitura</text>
+  <!-- ═══════════════════════════════════════════════════
+       EKS CLUSTER BOUNDARY
+  ═══════════════════════════════════════════════════ -->
+  <rect x="554" y="100" width="260" height="490" rx="6" fill="#FFF8EE" stroke="#FF9900" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <use href="#i-eks" x="558" y="103" width="16" height="16"/>
+  <text x="578" y="116" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#CC7A00">Amazon EKS Cluster</text>
 
-  <rect x="1340" y="135" width="290" height="545" class="lane-amber"/>
-  <text x="1368" y="172" class="h">Eventos e operacao</text>
-  <text x="1368" y="197" class="small">Integracao, logs e seguranca</text>
+  <!-- ═══════════════════════════════════════════════════
+       ZONE LABELS
+  ═══════════════════════════════════════════════════ -->
+  <text x="155" y="99"  font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#7B8EA0" letter-spacing="0.6">BORDA SEGURA</text>
+  <text x="365" y="128" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#7B8EA0" letter-spacing="0.6">ENTRADA ASSÍNCRONA</text>
+  <text x="858" y="128" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#7B8EA0" letter-spacing="0.6">DADOS</text>
+  <text x="1069" y="170" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#7B8EA0" letter-spacing="0.6">EVENT BUS</text>
+  <text x="1278" y="99" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#7B8EA0" letter-spacing="0.6">SERVIÇOS GERENCIADOS AWS</text>
 
-  <rect x="82" y="242" width="185" height="86" class="box box-blue"/>
-  <use href="#icon-api" x="96" y="250"/>
-  <text x="172" y="278" class="label">CloudFront</text>
-  <text x="172" y="302" class="small">TLS/cache global</text>
+  <!-- ═══════════════════════════════════════════════════
+       CLIENT
+  ═══════════════════════════════════════════════════ -->
+  <circle cx="72" cy="402" r="18" fill="#232F3E"/>
+  <path d="M46 446 C46 422 98 422 98 446" fill="#232F3E"/>
+  <text x="72" y="462" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">Cliente PJ</text>
+  <text x="72" y="476" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="10" fill="#545B64">/ Parceiro</text>
 
-  <rect x="82" y="358" width="185" height="86" class="box box-red"/>
-  <use href="#icon-shield" x="96" y="364"/>
-  <text x="172" y="394" class="label">AWS WAF</text>
-  <text x="172" y="418" class="small">proteção e rate limit</text>
+  <!-- ═══════════════════════════════════════════════════
+       HELPER: service card macro (inlined for each service)
+       Card: rect(x,y,185,72,rx=5) white + border
+       Icon: use(x+9, y+18, 36, 36)
+       Label: text(x+53, y+31)
+       Sub:   text(x+53, y+50)
+  ═══════════════════════════════════════════════════ -->
 
-  <rect x="82" y="474" width="185" height="86" class="box box-blue"/>
-  <use href="#icon-api" x="96" y="482"/>
-  <text x="172" y="510" class="label">API Gateway</text>
-  <text x="172" y="534" class="small">auth + throttling</text>
+  <!-- ── EDGE COLUMN (x=148) ── -->
+  <!-- Route 53 R1 y=108 -->
+  <rect x="148" y="108" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-r53" x="157" y="126" width="36" height="36"/>
+  <text x="201" y="139" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#16191F">Amazon Route 53</text>
+  <text x="201" y="157" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">DNS · health checks</text>
 
-  <rect x="365" y="236" width="200" height="86" class="box box-orange"/>
-  <use href="#icon-queue" x="378" y="244"/>
-  <text x="454" y="272" class="label">SQS</text>
-  <text x="454" y="296" class="small">fila de criacao</text>
+  <!-- CloudFront R2 y=200 -->
+  <rect x="148" y="200" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-cf" x="157" y="218" width="36" height="36"/>
+  <text x="201" y="231" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#16191F">CloudFront</text>
+  <text x="201" y="249" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">CDN · TLS · cache</text>
 
-  <rect x="365" y="352" width="200" height="86" class="box box-red"/>
-  <use href="#icon-queue" x="378" y="360"/>
-  <text x="454" y="388" class="label">DLQ</text>
-  <text x="454" y="412" class="small">falhas isoladas</text>
+  <!-- WAF R3 y=292 -->
+  <rect x="148" y="292" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-waf" x="157" y="310" width="36" height="36"/>
+  <text x="201" y="323" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#16191F">AWS WAF</text>
+  <text x="201" y="341" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">proteção · rate limit</text>
 
-  <rect x="365" y="468" width="200" height="86" class="box box-orange"/>
-  <use href="#icon-partner" x="378" y="476"/>
-  <text x="454" y="504" class="label">Registradora</text>
-  <text x="454" y="528" class="small">CIP/Nuclea fake</text>
+  <!-- API Gateway R4 y=384 -->
+  <rect x="148" y="384" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-apigw" x="157" y="402" width="36" height="36"/>
+  <text x="201" y="415" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#16191F">API Gateway</text>
+  <text x="201" y="433" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">auth · throttling</text>
 
-  <rect x="365" y="584" width="200" height="64" class="box box-blue"/>
-  <text x="392" y="611" class="label">Pagamento externo</text>
-  <text x="392" y="633" class="small">webhook / CNAB / API</text>
+  <!-- ── ASYNC COLUMN (x=358) ── -->
+  <!-- SQS R4 y=384 -->
+  <rect x="358" y="384" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-sqs" x="367" y="402" width="36" height="36"/>
+  <text x="411" y="415" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#16191F">Amazon SQS</text>
+  <text x="411" y="433" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">boleto-generation</text>
 
-  <rect x="668" y="224" width="300" height="82" class="box box-green"/>
-  <use href="#icon-container" x="682" y="230"/>
-  <text x="760" y="259" class="label">boleto-service</text>
-  <text x="760" y="283" class="small">gera boleto + transactional outbox</text>
+  <!-- DLQ R5 y=476 -->
+  <rect x="358" y="476" width="185" height="72" rx="5" fill="white" stroke="#DD344C" stroke-width="1.2"/>
+  <use href="#i-sqs" x="367" y="494" width="36" height="36"/>
+  <text x="411" y="507" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#DD344C">SQS DLQ</text>
+  <text x="411" y="525" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">falhas isoladas</text>
 
-  <rect x="668" y="344" width="300" height="82" class="box box-green"/>
-  <use href="#icon-container" x="682" y="350"/>
-  <text x="760" y="379" class="label">payment-service</text>
-  <text x="760" y="403" class="small">aguarda, valida valor e vencimento</text>
+  <!-- ── EKS COLUMN (x=565, w=220) ── -->
+  <!-- notification-service R1 y=108 -->
+  <rect x="565" y="128" width="220" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-pod" x="574" y="146" width="36" height="36"/>
+  <text x="618" y="159" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">notification-service</text>
+  <text x="618" y="177" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">envia notificações</text>
 
-  <rect x="668" y="464" width="300" height="82" class="box box-green"/>
-  <use href="#icon-container" x="682" y="470"/>
-  <text x="760" y="499" class="label">query-service</text>
-  <text x="760" y="523" class="small">read model / CQRS</text>
+  <!-- query-service R2 y=220 -->
+  <rect x="565" y="220" width="220" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-pod" x="574" y="238" width="36" height="36"/>
+  <text x="618" y="251" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">query-service</text>
+  <text x="618" y="269" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">CQRS read model</text>
 
-  <rect x="668" y="584" width="300" height="82" class="box box-green"/>
-  <use href="#icon-container" x="682" y="590"/>
-  <text x="760" y="619" class="label">notification-service</text>
-  <text x="760" y="643" class="small">notifica sucesso ou rejeicao</text>
+  <!-- payment-service R3 y=312 -->
+  <rect x="565" y="312" width="220" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-pod" x="574" y="330" width="36" height="36"/>
+  <text x="618" y="343" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">payment-service</text>
+  <text x="618" y="361" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">valida pagamentos</text>
 
-  <rect x="1088" y="224" width="185" height="82" class="box box-blue"/>
-  <use href="#icon-db" x="1100" y="228"/>
-  <text x="1180" y="258" class="label">RDS</text>
-  <text x="1180" y="282" class="small">write database</text>
+  <!-- boleto-service R4 y=404 -->
+  <rect x="565" y="404" width="220" height="72" rx="5" fill="white" stroke="#FF9900" stroke-width="1.5"/>
+  <use href="#i-pod" x="574" y="422" width="36" height="36"/>
+  <text x="618" y="435" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">boleto-service</text>
+  <text x="618" y="453" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">gera boleto + outbox</text>
 
-  <rect x="1088" y="344" width="185" height="82" class="box box-green"/>
-  <text x="1114" y="377" class="label">ElastiCache</text>
-  <text x="1114" y="401" class="small">idempotencia/cache</text>
+  <!-- outbox-worker R5 y=496 -->
+  <rect x="565" y="496" width="220" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-gear" x="574" y="514" width="36" height="36"/>
+  <text x="618" y="527" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">outbox-worker</text>
+  <text x="618" y="545" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">relay outbox → MSK</text>
 
-  <rect x="1088" y="464" width="185" height="82" class="box box-blue"/>
-  <use href="#icon-db" x="1100" y="468"/>
-  <text x="1180" y="498" class="label">RDS</text>
-  <text x="1180" y="522" class="small">read model</text>
+  <!-- ── DATA COLUMN (x=852) ── -->
+  <!-- RDS read R2 y=220 -->
+  <rect x="852" y="220" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-rds" x="861" y="238" width="36" height="36"/>
+  <text x="905" y="251" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">RDS PostgreSQL</text>
+  <text x="905" y="269" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">read model (CQRS)</text>
 
-  <rect x="1088" y="584" width="185" height="82" class="box box-blue"/>
-  <text x="1114" y="617" class="label">S3</text>
-  <text x="1114" y="641" class="small">PDFs / backups</text>
+  <!-- RDS write R4 y=404 -->
+  <rect x="852" y="404" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-rds" x="861" y="422" width="36" height="36"/>
+  <text x="905" y="435" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">RDS PostgreSQL</text>
+  <text x="905" y="453" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">write model + outbox</text>
 
-  <rect x="1375" y="224" width="220" height="82" class="box box-orange"/>
-  <use href="#icon-stream" x="1388" y="230"/>
-  <text x="1466" y="259" class="label">Amazon MSK</text>
-  <text x="1466" y="283" class="small">boleto.gerado / pagamento.*</text>
+  <!-- ElastiCache R5 y=496 -->
+  <rect x="852" y="496" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-elasticache" x="861" y="514" width="36" height="36"/>
+  <text x="905" y="527" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">ElastiCache Redis</text>
+  <text x="905" y="545" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">idempotência</text>
 
-  <rect x="1375" y="344" width="220" height="82" class="box box-gray"/>
-  <use href="#icon-monitor" x="1388" y="348"/>
-  <text x="1466" y="379" class="label">CloudWatch</text>
-  <text x="1466" y="403" class="small">logs, metricas e alarmes</text>
+  <!-- S3 R6 y=588 -->
+  <rect x="852" y="588" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-s3" x="861" y="606" width="36" height="36"/>
+  <text x="905" y="619" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">Amazon S3</text>
+  <text x="905" y="637" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">PDFs · backups</text>
 
-  <rect x="1375" y="464" width="220" height="82" class="box box-gray"/>
-  <text x="1404" y="497" class="label">X-Ray / OTel</text>
-  <text x="1404" y="521" class="small">tracing distribuido</text>
+  <!-- ── MSK TALL CARD (x=1062, y=190, h=300) ── -->
+  <rect x="1062" y="190" width="185" height="320" rx="6" fill="white" stroke="#E7157B" stroke-width="1.5"/>
+  <use href="#i-msk" x="1071" y="208" width="36" height="36"/>
+  <text x="1115" y="220" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600" fill="#16191F">Amazon MSK</text>
+  <text x="1115" y="237" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">Apache Kafka</text>
+  <!-- Separator -->
+  <line x1="1072" y1="256" x2="1237" y2="256" stroke="#F0D8E8" stroke-width="1"/>
+  <!-- Topics -->
+  <text x="1072" y="273" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#E7157B">Tópicos</text>
+  <circle cx="1079" cy="291" r="4" fill="#E7157B"/>
+  <text x="1089" y="295" font-family="Inter,Arial,sans-serif" font-size="11" fill="#16191F">boleto.gerado</text>
+  <circle cx="1079" cy="313" r="4" fill="#E7157B"/>
+  <text x="1089" y="317" font-family="Inter,Arial,sans-serif" font-size="11" fill="#16191F">pagamento.efetivado</text>
+  <circle cx="1079" cy="335" r="4" fill="#DD344C"/>
+  <text x="1089" y="339" font-family="Inter,Arial,sans-serif" font-size="11" fill="#16191F">pagamento.rejeitado</text>
+  <circle cx="1079" cy="357" r="4" fill="#569A31"/>
+  <text x="1089" y="361" font-family="Inter,Arial,sans-serif" font-size="11" fill="#16191F">notificacao.enviada</text>
+  <!-- DLT note -->
+  <line x1="1072" y1="376" x2="1237" y2="376" stroke="#F0D8E8" stroke-width="1"/>
+  <text x="1072" y="392" font-family="Inter,Arial,sans-serif" font-size="10" fill="#7B8EA0">Dead Letter Topics por</text>
+  <text x="1072" y="406" font-family="Inter,Arial,sans-serif" font-size="10" fill="#7B8EA0">consumer (Kafka DLT)</text>
+  <text x="1072" y="424" font-family="Inter,Arial,sans-serif" font-size="10" fill="#7B8EA0">retry + backoff</text>
+  <text x="1072" y="442" font-family="Inter,Arial,sans-serif" font-size="10" fill="#7B8EA0">configurável por serviço</text>
+  <text x="1072" y="460" font-family="Inter,Arial,sans-serif" font-size="10" fill="#7B8EA0">via Spring Kafka</text>
 
-  <rect x="1375" y="584" width="220" height="82" class="box box-red"/>
-  <text x="1404" y="617" class="label">Secrets Manager</text>
-  <text x="1404" y="641" class="small">credenciais e segredos</text>
+  <!-- ── OPS COLUMN 1 (x=1270) ── -->
+  <!-- CloudWatch R1 y=108 -->
+  <rect x="1270" y="108" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-cw" x="1279" y="126" width="36" height="36"/>
+  <text x="1323" y="139" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">CloudWatch</text>
+  <text x="1323" y="157" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">logs · métricas · alarmes</text>
 
-  <path d="M267 517 H365" class="arrow"/>
-  <path d="M565 279 H668" class="arrow"/>
-  <path d="M465 438 V468" class="arrow"/>
-  <path d="M565 511 H668" class="arrow"/>
-  <path d="M565 616 H668" class="arrow"/>
+  <!-- X-Ray R2 y=200 -->
+  <rect x="1270" y="200" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-xray" x="1279" y="218" width="36" height="36"/>
+  <text x="1323" y="231" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">AWS X-Ray / OTel</text>
+  <text x="1323" y="249" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">tracing distribuído</text>
 
-  <path d="M968 265 H1088" class="arrow"/>
-  <path d="M968 385 H1088" class="arrow"/>
-  <path d="M968 505 H1088" class="arrow"/>
+  <!-- Secrets Manager R3 y=292 -->
+  <rect x="1270" y="292" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-secrets" x="1279" y="310" width="36" height="36"/>
+  <text x="1323" y="323" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">Secrets Manager</text>
+  <text x="1323" y="341" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">credenciais · segredos</text>
 
-  <path d="M968 265 H1375" class="event"/>
-  <path d="M1375 265 C1240 292 1080 332 968 385" class="event"/>
-  <path d="M968 385 C1120 385 1225 230 1375 265" class="event"/>
-  <path d="M968 410 C1125 455 1230 315 1375 265" class="reject"/>
-  <path d="M1375 265 C1240 430 1100 480 968 505" class="event"/>
-  <path d="M1375 265 C1245 550 1100 610 968 625" class="event"/>
+  <!-- ── OPS COLUMN 2 (x=1475) ── -->
+  <!-- ECR y=108 -->
+  <rect x="1475" y="108" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-ecr" x="1484" y="126" width="36" height="36"/>
+  <text x="1528" y="139" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">Amazon ECR</text>
+  <text x="1528" y="157" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">imagens Docker</text>
 
-  <path d="M968 265 C1120 210 1270 360 1375 385" class="ops"/>
-  <path d="M968 625 C1120 685 1270 520 1375 505" class="ops"/>
-  <path d="M1375 625 C1240 715 1050 695 820 666" class="ops"/>
+  <!-- SNS y=200 -->
+  <rect x="1475" y="200" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <use href="#i-sns" x="1484" y="218" width="36" height="36"/>
+  <text x="1528" y="231" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">SNS / SES</text>
+  <text x="1528" y="249" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">alertas · e-mail</text>
 
-  <rect x="56" y="720" width="1568" height="205" class="lane"/>
-  <text x="86" y="760" class="h">Roteiro de explicacao arquitetural</text>
+  <!-- IAM note y=292 -->
+  <rect x="1475" y="292" width="185" height="72" rx="5" fill="white" stroke="#D5DBE5" stroke-width="1.2"/>
+  <rect x="1484" y="310" width="36" height="36" rx="6" fill="#DD344C"/>
+  <text x="1495" y="333" font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="white">IAM</text>
+  <text x="1528" y="323" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="600" fill="#16191F">IAM + IRSA</text>
+  <text x="1528" y="341" font-family="Inter,Arial,sans-serif" font-size="11" fill="#545B64">least privilege · RBAC</text>
 
-  <rect x="86" y="785" width="220" height="104" class="box box-gray"/>
-  <text x="110" y="814" class="label">DDD / Dominios</text>
-  <text x="110" y="840" class="small">Servicos separados por</text>
-  <text x="110" y="860" class="small">capacidade de negocio.</text>
+  <!-- ═══════════════════════════════════════════════════
+       ARROWS
+  ═══════════════════════════════════════════════════ -->
 
-  <rect x="330" y="785" width="220" height="104" class="box box-gray"/>
-  <text x="354" y="814" class="label">CQRS</text>
-  <text x="354" y="840" class="small">Write model do boleto e</text>
-  <text x="354" y="860" class="small">read model para consulta.</text>
+  <!-- 1. Client → Route53 (L-shape: right then up) -->
+  <path d="M98,402 L133,402 L133,144 L148,144" fill="none" stroke="#445566" stroke-width="1.5" marker-end="url(#mh)"/>
 
-  <rect x="574" y="785" width="220" height="104" class="box box-gray"/>
-  <text x="598" y="814" class="label">Outbox</text>
-  <text x="598" y="840" class="small">Banco e evento nascem</text>
-  <text x="598" y="860" class="small">na mesma transacao.</text>
+  <!-- 2. Route53 ↓ CloudFront -->
+  <path d="M241,180 L241,200" fill="none" stroke="#445566" stroke-width="1.5" marker-end="url(#mh)"/>
 
-  <rect x="818" y="785" width="220" height="104" class="box box-gray"/>
-  <text x="842" y="814" class="label">Event-driven</text>
-  <text x="842" y="840" class="small">MSK desacopla pagamento,</text>
-  <text x="842" y="860" class="small">consulta e notificacao.</text>
+  <!-- 3. CloudFront ↓ WAF -->
+  <path d="M241,272 L241,292" fill="none" stroke="#445566" stroke-width="1.5" marker-end="url(#mh)"/>
 
-  <rect x="1062" y="785" width="220" height="104" class="box box-gray"/>
-  <text x="1086" y="814" class="label">Resiliencia</text>
-  <text x="1086" y="840" class="small">SQS absorve picos e</text>
-  <text x="1086" y="860" class="small">DLQ isola falhas.</text>
+  <!-- 4. WAF ↓ API Gateway -->
+  <path d="M241,364 L241,384" fill="none" stroke="#445566" stroke-width="1.5" marker-end="url(#mh)"/>
 
-  <rect x="1306" y="785" width="280" height="104" class="box box-gray"/>
-  <text x="1330" y="814" class="label">Observabilidade e seguranca</text>
-  <text x="1330" y="840" class="small">CloudWatch, tracing, WAF,</text>
-  <text x="1330" y="860" class="small">Secrets Manager e least privilege.</text>
+  <!-- 5. API Gateway → SQS -->
+  <path d="M333,420 L358,420" fill="none" stroke="#445566" stroke-width="1.8" marker-end="url(#mh)"/>
+  <text x="335" y="414" font-family="Inter,Arial,sans-serif" font-size="9" fill="#445566">202 Accepted</text>
 
-  <rect x="56" y="112" width="72" height="22" class="pill"/>
-  <text x="72" y="127" class="pill-text">Public</text>
-  <rect x="344" y="112" width="82" height="22" class="pill"/>
-  <text x="360" y="127" class="pill-text">Async</text>
-  <rect x="639" y="112" width="92" height="22" class="pill"/>
-  <text x="655" y="127" class="pill-text">Compute</text>
-  <rect x="1064" y="112" width="74" height="22" class="pill"/>
-  <text x="1080" y="127" class="pill-text">State</text>
-  <rect x="1349" y="112" width="92" height="22" class="pill"/>
-  <text x="1365" y="127" class="pill-text">Control</text>
+  <!-- 6. SQS → boleto-service -->
+  <path d="M543,420 L565,420" fill="none" stroke="#445566" stroke-width="1.8" marker-end="url(#mh)"/>
+  <text x="545" y="414" font-family="Inter,Arial,sans-serif" font-size="9" fill="#445566">long polling</text>
+
+  <!-- 7. boleto-service → RDS write -->
+  <path d="M785,440 L852,440" fill="none" stroke="#445566" stroke-width="1.8" marker-end="url(#mh)"/>
+  <text x="787" y="434" font-family="Inter,Arial,sans-serif" font-size="9" fill="#445566">ACID + outbox</text>
+
+  <!-- 8. SQS ↓ DLQ (failure) -->
+  <path d="M451,456 L451,476" fill="none" stroke="#DD344C" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#mhr)"/>
+  <text x="456" y="470" font-family="Inter,Arial,sans-serif" font-size="9" fill="#DD344C">falha</text>
+
+  <!-- 9. outbox-worker → MSK (L-shape up-right) -->
+  <path d="M785,532 L820,532 L820,350 L1062,350" fill="none" stroke="#E7157B" stroke-width="1.6" stroke-dasharray="6,4" marker-end="url(#mhe)"/>
+  <text x="826" y="344" font-family="Inter,Arial,sans-serif" font-size="9" fill="#E7157B">boleto.gerado</text>
+
+  <!-- 10. MSK → payment-service (straight left through data gap y≈348) -->
+  <path d="M1062,348 L785,348" fill="none" stroke="#E7157B" stroke-width="1.6" stroke-dasharray="6,4" marker-end="url(#mhe)"/>
+
+  <!-- 11. MSK → notification-service (straight left y=164, above data col) -->
+  <path d="M1062,164 L785,164" fill="none" stroke="#E7157B" stroke-width="1.6" stroke-dasharray="6,4" marker-end="url(#mhe)"/>
+
+  <!-- 12. MSK → query-service (3-segment: left then down, y=198 just above RDS-read at y=220) -->
+  <path d="M1062,198 L844,198 L844,256 L785,256" fill="none" stroke="#E7157B" stroke-width="1.6" stroke-dasharray="6,4" marker-end="url(#mhe)"/>
+
+  <!-- 13. query-service → RDS read (horizontal same row) -->
+  <path d="M785,256 L852,256" fill="none" stroke="#445566" stroke-width="1.5" marker-end="url(#mh)"/>
+  <text x="787" y="250" font-family="Inter,Arial,sans-serif" font-size="9" fill="#445566">read</text>
+
+  <!-- 14. payment-service → MSK (pagamento.efetivado — offset slightly from arrow 10) -->
+  <path d="M785,336 L1062,336" fill="none" stroke="#E7157B" stroke-width="1.4" stroke-dasharray="4,4" marker-end="url(#mhe)"/>
+  <text x="860" y="330" font-family="Inter,Arial,sans-serif" font-size="9" fill="#E7157B">pagamento.efetivado</text>
+
+  <!-- 15. boleto → ElastiCache (idempotency check — down then right) -->
+  <path d="M675,476 L675,532 L852,532" fill="none" stroke="#445566" stroke-width="1.3" stroke-dasharray="4,4" marker-end="url(#mh)"/>
+  <text x="677" y="510" font-family="Inter,Arial,sans-serif" font-size="9" fill="#445566">Idempotency-Key</text>
+
+  <!-- 16. Ops observability dotted (representative line from EKS center to CloudWatch) -->
+  <path d="M785,200 L1248,200 L1248,110 L1270,110" fill="none" stroke="#AAB7C4" stroke-width="1.2" stroke-dasharray="4,5" marker-end="url(#mhg)"/>
+  <text x="1000" y="196" font-family="Inter,Arial,sans-serif" font-size="9" fill="#7B8EA0">logs · métricas · traces</text>
+
+  <!-- ═══════════════════════════════════════════════════
+       METHODOLOGY BAR
+  ═══════════════════════════════════════════════════ -->
+  <rect x="30" y="882" width="1740" height="80" rx="6" fill="#F8FAFC" stroke="#D5DBE5" stroke-width="1.2"/>
+  <text x="46" y="905" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" fill="#16191F">Padrões e Boas Práticas Aplicados</text>
+
+  <!-- DDD -->
+  <rect x="46" y="916" width="196" height="36" rx="4" fill="white" stroke="#D5DBE5" stroke-width="1"/>
+  <text x="58" y="930" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#16191F">DDD · Bounded Contexts</text>
+  <text x="58" y="944" font-family="Inter,Arial,sans-serif" font-size="10" fill="#545B64">serviços separados por capacidade</text>
+
+  <!-- CQRS -->
+  <rect x="252" y="916" width="196" height="36" rx="4" fill="white" stroke="#D5DBE5" stroke-width="1"/>
+  <text x="264" y="930" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#16191F">CQRS</text>
+  <text x="264" y="944" font-family="Inter,Arial,sans-serif" font-size="10" fill="#545B64">write model ≠ read model</text>
+
+  <!-- Transactional Outbox -->
+  <rect x="458" y="916" width="226" height="36" rx="4" fill="white" stroke="#D5DBE5" stroke-width="1"/>
+  <text x="470" y="930" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#16191F">Transactional Outbox</text>
+  <text x="470" y="944" font-family="Inter,Arial,sans-serif" font-size="10" fill="#545B64">banco e evento na mesma tx ACID</text>
+
+  <!-- Event-Driven -->
+  <rect x="694" y="916" width="206" height="36" rx="4" fill="white" stroke="#D5DBE5" stroke-width="1"/>
+  <text x="706" y="930" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#16191F">Event-Driven Architecture</text>
+  <text x="706" y="944" font-family="Inter,Arial,sans-serif" font-size="10" fill="#545B64">MSK desacopla todos os domínios</text>
+
+  <!-- Resiliência -->
+  <rect x="910" y="916" width="196" height="36" rx="4" fill="white" stroke="#D5DBE5" stroke-width="1"/>
+  <text x="922" y="930" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#16191F">Resiliência AWS</text>
+  <text x="922" y="944" font-family="Inter,Arial,sans-serif" font-size="10" fill="#545B64">SQS absorve picos · DLQ · DLT</text>
+
+  <!-- Segurança -->
+  <rect x="1116" y="916" width="196" height="36" rx="4" fill="white" stroke="#D5DBE5" stroke-width="1"/>
+  <text x="1128" y="930" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#16191F">Segurança em Camadas</text>
+  <text x="1128" y="944" font-family="Inter,Arial,sans-serif" font-size="10" fill="#545B64">WAF · IAM/IRSA · Secrets Mgr</text>
+
+  <!-- Idempotência -->
+  <rect x="1322" y="916" width="196" height="36" rx="4" fill="white" stroke="#D5DBE5" stroke-width="1"/>
+  <text x="1334" y="930" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#16191F">Idempotência</text>
+  <text x="1334" y="944" font-family="Inter,Arial,sans-serif" font-size="10" fill="#545B64">Idempotency-Key via Redis</text>
+
+  <!-- Hexagonal -->
+  <rect x="1528" y="916" width="220" height="36" rx="4" fill="white" stroke="#D5DBE5" stroke-width="1"/>
+  <text x="1540" y="930" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#16191F">Arquitetura Hexagonal</text>
+  <text x="1540" y="944" font-family="Inter,Arial,sans-serif" font-size="10" fill="#545B64">domain · application · adapter</text>
+
 </svg>

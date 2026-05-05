@@ -2,6 +2,21 @@
 
 Modernizacao da area de recebimentos bancarios com arquitetura distribuida em Java 21, Spring Boot, PostgreSQL, Redis, Kafka/Redpanda, Kubernetes e infraestrutura AWS.
 
+## Padroes e Metodologias
+
+| Padrao | Onde se aplica |
+|---|---|
+| **DDD (Domain-Driven Design)** | Cada microsservico corresponde a um bounded context: `boleto`, `payment`, `query`, `notification`. Entidades e regras de negocio vivem na camada `domain`, isoladas do framework. |
+| **Arquitetura Hexagonal** | Camadas `domain → application → adapter`. Use cases dependem apenas de interfaces de porta; adapters (HTTP, Kafka, JPA) sao plugaveis e substituiveis. |
+| **CQRS** | `boleto-service` e o modelo de escrita; `query-service` mantem um read model proprio, atualizado por eventos Kafka. Nenhum servico le o banco do outro. |
+| **Transactional Outbox** | Boleto e evento `boleto.gerado` sao gravados na mesma transacao ACID no PostgreSQL. O `outbox-worker` publica no MSK de forma independente, garantindo consistencia banco/evento sem dual write. |
+| **Event-Driven Architecture** | Amazon MSK (Kafka) desacopla todos os dominios. Servicos publicam e consomem eventos sem chamadas sincronas entre si. |
+| **Resiliencia** | SQS absorve picos na entrada (API Gateway → SQS → boleto-service). DLQ isola mensagens com falha. Kafka DLT por consumer com retry e backoff configuravel. |
+| **Idempotencia** | `Idempotency-Key` validada no ElastiCache Redis antes de processar cada mensagem, prevenindo duplicatas em reprocessamentos. |
+| **Seguranca em Camadas** | CloudFront → AWS WAF → API Gateway com autenticacao → IAM/IRSA por service account no EKS → Secrets Manager para credenciais. |
+
+Veja tambem: [`docs/ARCHITECTURE_DECISION_RECORD.md`](receber-bank-services/docs/ARCHITECTURE_DECISION_RECORD.md) — decisoes detalhadas sobre Outbox vs Saga, CQRS, entrada assincrona e Arquitetura Hexagonal.
+
 ## Visao Geral
 
 O projeto e organizado como um conjunto de microservicos Maven em `receber-bank-services`:
