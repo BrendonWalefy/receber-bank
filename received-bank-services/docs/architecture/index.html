@@ -456,6 +456,22 @@
       font-weight: 750;
     }
 
+    .notice {
+      margin-top: 16px;
+      padding: 16px 18px;
+      border: 1px solid #e2c878;
+      border-left: 4px solid var(--gold);
+      border-radius: 8px;
+      background: #fff9e8;
+      color: #5f4b17;
+    }
+
+    .notice strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #49380f;
+    }
+
     .footer {
       padding: 30px clamp(24px, 6vw, 88px);
       color: var(--muted);
@@ -635,7 +651,7 @@
 
       <section id="arquitetura" class="soft-band">
         <div class="section-head">
-          <h2>Arquitetura AWS de Referência</h2>
+          <h2>Arquitetura AWS</h2>
           <p>O desenho organiza borda, entrada assíncrona, compute, dados, eventos, segurança e observabilidade em uma topologia pronta para evoluir de ambiente local para cloud.</p>
         </div>
         <div class="diagram-frame">
@@ -813,7 +829,7 @@ docker compose up --build</code></pre>
       <section id="cloud" class="band">
         <div class="section-head">
           <h2>Cloud e Infraestrutura como Código</h2>
-          <p>O repositório contém Terraform para provisionamento AWS e manifests Kubernetes para execução dos serviços no EKS.</p>
+          <p>Use os comandos abaixo para inicializar o Terraform, revisar o plano de execução e provisionar a infraestrutura AWS do projeto com as credenciais configuradas no ambiente local.</p>
         </div>
         <table>
           <thead>
@@ -833,11 +849,15 @@ terraform init
 terraform plan
 terraform apply</code></pre>
           <div class="card accent-gold">
-            <strong>Arquivos principais</strong>
-            <p><code>received-bank-services/infra/aws/terraform</code></p>
-            <p><code>received-bank-services/k8s/aws</code></p>
-            <p><code>received-bank-services/docs/architecture/aws-architecture.md</code></p>
+            <strong>Provisionamento AWS</strong>
+            <p><code>terraform init</code> prepara o diretório e baixa os providers necessários.</p>
+            <p><code>terraform plan</code> mostra quais recursos serão criados, alterados ou removidos.</p>
+            <p><code>terraform apply</code> executa o plano e cria os recursos na conta AWS ativa.</p>
           </div>
+        </div>
+        <div class="notice">
+          <strong>Atenção sobre credenciais e custos</strong>
+          <p>Esses comandos usam as credenciais AWS configuradas no ambiente de quem executa. Eles não usam uma conta fixa do repositório. Ao rodar <code>terraform apply</code>, os recursos serão criados na conta AWS ativa e podem gerar custos.</p>
         </div>
       </section>
 

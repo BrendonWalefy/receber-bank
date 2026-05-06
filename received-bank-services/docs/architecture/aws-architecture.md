@@ -230,13 +230,15 @@ cp terraform.tfvars.example terraform.tfvars
 
 2. Editar `terraform.tfvars`, principalmente `db_password`.
 
-3. Criar infraestrutura:
+3. Criar a infraestrutura na AWS com as credenciais configuradas no ambiente local:
 
 ```bash
 terraform init
 terraform plan
 terraform apply
 ```
+
+> Atenção: `terraform apply` usa a conta AWS ativa de quem executa o comando. Os recursos provisionados podem gerar custos.
 
 4. Configurar acesso ao EKS:
 
