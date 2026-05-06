@@ -63,9 +63,6 @@ A documentação navegável do projeto fica em [`docs/index.html`](docs/index.ht
 
 As coleções de API estão em [`docs/api`](docs/api): Postman e Insomnia prontos para uso.
 
-Após publicar no GitHub, habilite o Pages em:
-
-`Settings` → `Pages` → `Build and deployment` → `GitHub Actions`
 
 ---
 
