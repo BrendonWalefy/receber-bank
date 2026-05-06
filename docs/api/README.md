@@ -1,21 +1,21 @@
 # Colecao de API
 
-Importe `receber-bank.postman_collection.json` no Postman ou `receber-bank.insomnia.json` no Insomnia para demonstrar a jornada ponta a ponta do case.
+Importe `received-bank.postman_collection.json` no Postman ou `received-bank.insomnia.json` no Insomnia para demonstrar a jornada ponta a ponta do case.
 
 ## Como usar
 
 1. Suba a stack local:
 
 ```bash
-cd receber-bank-services
+cd received-bank-services
 docker compose up --build
 ```
 
 2. Importe uma das colecoes:
 
 ```text
-docs/api/receber-bank.postman_collection.json
-docs/api/receber-bank.insomnia.json
+docs/api/received-bank.postman_collection.json
+docs/api/received-bank.insomnia.json
 ```
 
 3. Execute a pasta `00 - Health checks`.

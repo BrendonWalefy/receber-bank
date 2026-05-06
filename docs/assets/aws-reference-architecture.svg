@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1800" height="970" viewBox="0 0 1800 970" role="img" aria-labelledby="diag-title diag-desc">
-  <title id="diag-title">Receber Bank — Arquitetura AWS de Referência</title>
+  <title id="diag-title">Received Bank — Arquitetura AWS de Referência</title>
   <desc id="diag-desc">Diagrama de arquitetura AWS mostrando borda segura, entrada assíncrona via SQS, microsserviços em EKS (boleto, payment, query, notification), RDS, ElastiCache, Amazon MSK, CloudWatch e Secrets Manager. Padrões: DDD, CQRS, Transactional Outbox, Event-Driven.</desc>
 
   <defs>
@@ -197,7 +197,7 @@
   <!-- ═══════════════════════════════════════════════════
        TITLE
   ═══════════════════════════════════════════════════ -->
-  <text x="30" y="36" font-family="Inter,'Amazon Ember',Arial,sans-serif" font-size="22" font-weight="700" fill="#16191F">Receber Bank — Arquitetura AWS de Referência</text>
+  <text x="30" y="36" font-family="Inter,'Amazon Ember',Arial,sans-serif" font-size="22" font-weight="700" fill="#16191F">Received Bank — Arquitetura AWS de Referência</text>
   <text x="30" y="57" font-family="Inter,'Amazon Ember',Arial,sans-serif" font-size="13" fill="#545B64">Java 21 · Spring Boot · EKS · Amazon MSK · RDS PostgreSQL · DDD · CQRS · Transactional Outbox · Event-Driven Architecture</text>
 
   <!-- ═══════════════════════════════════════════════════
