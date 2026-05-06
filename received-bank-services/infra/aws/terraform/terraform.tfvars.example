@@ -1,0 +1,10 @@
+aws_region   = "us-east-1"
+project_name = "received-bank"
+environment  = "dev"
+db_username  = "recebimentos"
+db_password  = "change-me-with-a-strong-password"
+
+eks_node_instance_types = ["t3.medium"]
+eks_desired_size        = 2
+eks_min_size            = 1
+eks_max_size            = 4

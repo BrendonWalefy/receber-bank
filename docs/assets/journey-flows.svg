@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1680" height="1180" viewBox="0 0 1680 1180" role="img" aria-labelledby="title desc">
-  <title id="title">Receber Bank - Fluxos das jornadas</title>
+  <title id="title">Received Bank - Fluxos das jornadas</title>
   <desc id="desc">Fluxos separados para explicar as jornadas de emissao de boleto, registro externo, pagamento aprovado, pagamento rejeitado, consulta e notificacao.</desc>
   <defs>
     <style>
@@ -38,7 +38,7 @@
   </defs>
 
   <rect width="1680" height="1180" class="bg"/>
-  <text x="56" y="64" class="title">Fluxos das jornadas do Receber Bank</text>
+  <text x="56" y="64" class="title">Fluxos das jornadas do Received Bank</text>
   <text x="56" y="96" class="subtitle">Use como roteiro de apresentacao: cada linha explica uma jornada sem cruzar setas com as demais.</text>
 
   <rect x="56" y="130" width="1568" height="145" class="journey journey-blue"/>
