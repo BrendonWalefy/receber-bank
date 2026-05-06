@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Receber Bank | Documentação</title>
-  <meta name="description" content="Documentação técnica do projeto Receber Bank — microsserviços bancários com Java 21, Spring Boot, EKS, MSK, DDD, CQRS e Transactional Outbox.">
+  <title>Received Bank | Documentação</title>
+  <meta name="description" content="Documentação técnica do projeto Received Bank — microsserviços bancários com Java 21, Spring Boot, EKS, MSK, DDD, CQRS e Transactional Outbox.">
   <style>
     :root {
       color-scheme: light;
@@ -212,7 +212,7 @@
   <div class="shell">
     <aside>
       <div class="brand">
-        <strong>Receber Bank</strong>
+        <strong>Received Bank</strong>
         <span>Documentação do projeto</span>
       </div>
       <nav aria-label="Navegação principal">
@@ -231,7 +231,7 @@
 
     <main>
       <header class="hero">
-        <h1>Receber Bank</h1>
+        <h1>Received Bank</h1>
         <p>Plataforma de recebimentos bancários baseada em microsserviços, eventos de domínio e separação entre escrita e leitura para emissão, consulta, pagamento e notificação de boletos.</p>
         <span class="tag">Java 21</span>
         <span class="tag">Spring Boot 3.2</span>
@@ -319,7 +319,7 @@
         <h2>Arquitetura AWS de Referência</h2>
         <p>Diagrama com ícones AWS oficiais, organizado em zonas (VPC, EKS Cluster, serviços gerenciados). Mostra a borda segura, a entrada assíncrona via SQS, o fluxo principal de criação e o bus de eventos MSK.</p>
         <div class="diagram-frame">
-          <img src="assets/aws-reference-architecture.svg?v=20260505-3" alt="Diagrama de arquitetura AWS do Receber Bank: Route 53, CloudFront, WAF, API Gateway, SQS, EKS com boleto/payment/query/notification services, RDS, ElastiCache, MSK, CloudWatch e Secrets Manager.">
+          <img src="assets/aws-reference-architecture.svg?v=20260505-3" alt="Diagrama de arquitetura AWS do Received Bank: Route 53, CloudFront, WAF, API Gateway, SQS, EKS com boleto/payment/query/notification services, RDS, ElastiCache, MSK, CloudWatch e Secrets Manager.">
         </div>
         <table>
           <thead>
@@ -401,7 +401,7 @@
             <span>Use cases testáveis sem Spring, sem banco, sem Kafka. A troca de adapter (JPA, Kafka, in-memory) não afeta a regra de negócio.</span>
           </div>
         </div>
-        <p style="margin-top:16px" class="muted">Arquivo completo: <code>receber-bank-services/docs/ARCHITECTURE_DECISION_RECORD.md</code></p>
+        <p style="margin-top:16px" class="muted">Arquivo completo: <code>received-bank-services/docs/ARCHITECTURE_DECISION_RECORD.md</code></p>
       </section>
 
       <!-- ── SERVIÇOS ── -->
@@ -528,8 +528,8 @@
       <section id="demo">
         <h2>Demo Postman / Insomnia</h2>
         <p>As coleções versionadas no repositório guiam a apresentação ponta a ponta: health checks, criação do boleto, registro externo simulado, pagamento aprovado, consulta CQRS e cenário de rejeição por regra de negócio.</p>
-        <pre><code>docs/api/receber-bank.postman_collection.json
-docs/api/receber-bank.insomnia.json</code></pre>
+        <pre><code>docs/api/received-bank.postman_collection.json
+docs/api/received-bank.insomnia.json</code></pre>
         <p class="muted">No Postman, as variáveis da jornada são capturadas automaticamente (<code>boleto_id</code>, <code>codigo_barras</code>, <code>linha_digitavel</code>). No Insomnia, copie os campos da resposta de criação do boleto para o ambiente antes de prosseguir.</p>
       </section>
 
@@ -537,7 +537,7 @@ docs/api/receber-bank.insomnia.json</code></pre>
       <section id="local">
         <h2>Ambiente Local</h2>
         <p>Use o Maven Wrapper para build e testes, e o Docker Compose para subir a stack completa.</p>
-        <pre><code>cd receber-bank-services
+        <pre><code>cd received-bank-services
 ./mvnw clean test
 docker compose up --build</code></pre>
         <p>Dependências locais expostas:</p>
@@ -554,7 +554,7 @@ http://localhost:8084/actuator/health   # notification-service</code></pre>
       <!-- ── AWS ── -->
       <section id="aws">
         <h2>AWS e Kubernetes</h2>
-        <p>O repositório contém base de infraestrutura em <code>receber-bank-services/infra/aws/terraform</code> e manifests Kubernetes em <code>receber-bank-services/k8s/aws</code>.</p>
+        <p>O repositório contém base de infraestrutura em <code>received-bank-services/infra/aws/terraform</code> e manifests Kubernetes em <code>received-bank-services/k8s/aws</code>.</p>
         <table>
           <thead>
             <tr><th>Área</th><th>Recursos provisionados</th></tr>
@@ -579,7 +579,7 @@ http://localhost:8084/actuator/health   # notification-service</code></pre>
           </tbody>
         </table>
         <p style="margin-top:16px">Para provisionar:</p>
-        <pre><code>cd receber-bank-services/infra/aws/terraform
+        <pre><code>cd received-bank-services/infra/aws/terraform
 cp terraform.tfvars.example terraform.tfvars
 # edite terraform.tfvars (obrigatório: db_password)
 terraform init

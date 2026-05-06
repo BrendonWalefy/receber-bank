@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: receber-bank-services
+        working-directory: received-bank-services
     steps:
       - name: Checkout
         uses: actions/checkout@v4
