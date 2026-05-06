@@ -319,7 +319,7 @@
         <h2>Arquitetura AWS de Referência</h2>
         <p>Diagrama com ícones AWS oficiais, organizado em zonas (VPC, EKS Cluster, serviços gerenciados). Mostra a borda segura, a entrada assíncrona via SQS, o fluxo principal de criação e o bus de eventos MSK.</p>
         <div class="diagram-frame">
-          <img src="assets/aws-reference-architecture.svg?v=20260505-3" alt="Diagrama de arquitetura AWS do Received Bank: Route 53, CloudFront, WAF, API Gateway, SQS, EKS com boleto/payment/query/notification services, RDS, ElastiCache, MSK, CloudWatch e Secrets Manager.">
+          <img src="../assets/aws-reference-architecture.svg?v=20260505-3" alt="Diagrama de arquitetura AWS do Received Bank: Route 53, CloudFront, WAF, API Gateway, SQS, EKS com boleto/payment/query/notification services, RDS, ElastiCache, MSK, CloudWatch e Secrets Manager.">
         </div>
         <table>
           <thead>
@@ -401,7 +401,7 @@
             <span>Use cases testáveis sem Spring, sem banco, sem Kafka. A troca de adapter (JPA, Kafka, in-memory) não afeta a regra de negócio.</span>
           </div>
         </div>
-        <p style="margin-top:16px" class="muted">Arquivo completo: <code>received-bank-services/docs/ARCHITECTURE_DECISION_RECORD.md</code></p>
+        <p style="margin-top:16px" class="muted">Arquivo completo: <code>received-bank-services/docs/architecture/ARCHITECTURE_DECISION_RECORD.md</code></p>
       </section>
 
       <!-- ── SERVIÇOS ── -->
@@ -450,7 +450,7 @@
         <h2>Fluxos das Jornadas</h2>
         <p>Fluxos separados para explicar cada parte do case sem misturar com a arquitetura geral.</p>
         <div class="diagram-frame">
-          <img src="assets/journey-flows.svg?v=20260505-3" alt="Fluxos das jornadas de emissão de boleto, registro externo, pagamento aprovado, pagamento rejeitado, consulta e notificação.">
+          <img src="../assets/journey-flows.svg?v=20260505-3" alt="Fluxos das jornadas de emissão de boleto, registro externo, pagamento aprovado, pagamento rejeitado, consulta e notificação.">
         </div>
         <div class="flow">
           <div class="step"><strong>1. Criação</strong><br>Cliente envia <code>POST /boletos</code>; o <code>boleto-service</code> valida a requisição e cria o agregado de boleto.</div>
@@ -528,8 +528,8 @@
       <section id="demo">
         <h2>Demo Postman / Insomnia</h2>
         <p>As coleções versionadas no repositório guiam a apresentação ponta a ponta: health checks, criação do boleto, registro externo simulado, pagamento aprovado, consulta CQRS e cenário de rejeição por regra de negócio.</p>
-        <pre><code>docs/api/received-bank.postman_collection.json
-docs/api/received-bank.insomnia.json</code></pre>
+        <pre><code>received-bank-services/docs/api/received-bank.postman_collection.json
+received-bank-services/docs/api/received-bank.insomnia.json</code></pre>
         <p class="muted">No Postman, as variáveis da jornada são capturadas automaticamente (<code>boleto_id</code>, <code>codigo_barras</code>, <code>linha_digitavel</code>). No Insomnia, copie os campos da resposta de criação do boleto para o ambiente antes de prosseguir.</p>
       </section>
 

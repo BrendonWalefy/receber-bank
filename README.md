@@ -34,7 +34,7 @@ O projeto nasceu do interesse em entender como patterns como DDD, Hexagonal Arch
 | **Idempotência** | `Idempotency-Key` validada no ElastiCache Redis antes de processar cada mensagem, prevenindo duplicatas em reprocessamentos. |
 | **Segurança em Camadas** | CloudFront → AWS WAF → API Gateway → IAM/IRSA por service account no EKS → Secrets Manager para credenciais. |
 
-Decisões de design detalhadas estão documentadas em [`received-bank-services/docs/ARCHITECTURE_DECISION_RECORD.md`](received-bank-services/docs/ARCHITECTURE_DECISION_RECORD.md).
+Decisões de design detalhadas estão documentadas em [`received-bank-services/docs/architecture/ARCHITECTURE_DECISION_RECORD.md`](received-bank-services/docs/architecture/ARCHITECTURE_DECISION_RECORD.md).
 
 ---
 
@@ -60,9 +60,9 @@ Infraestrutura local:
 
 ## Documentação
 
-A documentação navegável do projeto fica em [`docs/index.html`](docs/index.html) e é publicada pelo GitHub Pages via workflow [`pages.yml`](.github/workflows/pages.yml).
+A documentação navegável do projeto fica em [`received-bank-services/docs/index.html`](received-bank-services/docs/index.html) e é publicada pelo GitHub Pages via workflow [`pages.yml`](.github/workflows/pages.yml).
 
-As coleções de API estão em [`docs/api`](docs/api): Postman e Insomnia prontos para uso.
+As coleções de API estão em [`received-bank-services/docs/api`](received-bank-services/docs/api): Postman e Insomnia prontos para uso.
 
 
 ---

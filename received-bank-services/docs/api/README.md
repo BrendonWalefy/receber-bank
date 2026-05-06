@@ -14,8 +14,8 @@ docker compose up --build
 2. Importe uma das colecoes:
 
 ```text
-docs/api/received-bank.postman_collection.json
-docs/api/received-bank.insomnia.json
+received-bank-services/docs/api/received-bank.postman_collection.json
+received-bank-services/docs/api/received-bank.insomnia.json
 ```
 
 3. Execute a pasta `00 - Health checks`.
