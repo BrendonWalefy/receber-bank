@@ -524,13 +524,13 @@
       </div>
       <nav aria-label="Navegação principal">
         <a href="#visao-geral">Visão geral</a>
+        <a href="#stack">Stack técnica</a>
         <a href="#fluxos">Fluxo operacional</a>
         <a href="#arquitetura">Arquitetura AWS</a>
         <a href="#padroes">Padrões aplicados</a>
         <a href="#adr">Decisões arquiteturais</a>
         <a href="#servicos">Serviços</a>
         <a href="#apis">APIs</a>
-        <a href="#stack">Stack técnica</a>
         <a href="#local">Ambiente local</a>
         <a href="#colecoes">Coleções de API</a>
         <a href="#cloud">Cloud e IaC</a>
@@ -602,6 +602,26 @@
             <p>Arquitetura AWS com EKS, MSK, SQS, RDS, ElastiCache, WAF e CloudFront.</p>
           </div>
         </div>
+      </section>
+
+      <section id="stack" class="soft-band">
+        <div class="section-head">
+          <h2>Stack Técnica</h2>
+          <p>A base do projeto combina runtime moderno, mensageria, persistência relacional, cache de idempotência, infraestrutura como código e pipelines de validação.</p>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Camada</th><th>Tecnologias</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Linguagem e runtime</td><td>Java 21, Spring Boot 3.2, Spring Cloud</td></tr>
+            <tr><td>Mensageria</td><td>Apache Kafka via Redpanda em ambiente local e Amazon MSK no desenho cloud</td></tr>
+            <tr><td>Dados</td><td>PostgreSQL 16 para escrita, Outbox e read model; Redis 7 para idempotência</td></tr>
+            <tr><td>Cloud</td><td>AWS EKS, API Gateway, SQS, SNS, S3, CloudFront, WAF, RDS, ElastiCache e MSK</td></tr>
+            <tr><td>Infraestrutura como código</td><td>Terraform para provisionamento AWS e manifests Kubernetes para EKS</td></tr>
+            <tr><td>Observabilidade e CI</td><td>Spring Actuator, health checks por serviço, Maven multi-module e GitHub Actions</td></tr>
+          </tbody>
+        </table>
       </section>
 
       <section id="fluxos" class="soft-band">
@@ -762,26 +782,6 @@
             <p><code>http://localhost:8084/actuator/health</code></p>
           </div>
         </div>
-      </section>
-
-      <section id="stack" class="soft-band">
-        <div class="section-head">
-          <h2>Stack Técnica</h2>
-          <p>A base do projeto combina runtime moderno, mensageria, persistência relacional, cache de idempotência, infraestrutura como código e pipelines de validação.</p>
-        </div>
-        <table>
-          <thead>
-            <tr><th>Camada</th><th>Tecnologias</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Linguagem e runtime</td><td>Java 21, Spring Boot 3.2, Spring Cloud</td></tr>
-            <tr><td>Mensageria</td><td>Apache Kafka via Redpanda em ambiente local e Amazon MSK no desenho cloud</td></tr>
-            <tr><td>Dados</td><td>PostgreSQL 16 para escrita, Outbox e read model; Redis 7 para idempotência</td></tr>
-            <tr><td>Cloud</td><td>AWS EKS, API Gateway, SQS, SNS, S3, CloudFront, WAF, RDS, ElastiCache e MSK</td></tr>
-            <tr><td>Infraestrutura como código</td><td>Terraform para provisionamento AWS e manifests Kubernetes para EKS</td></tr>
-            <tr><td>Observabilidade e CI</td><td>Spring Actuator, health checks por serviço, Maven multi-module e GitHub Actions</td></tr>
-          </tbody>
-        </table>
       </section>
 
       <section id="local" class="band">
