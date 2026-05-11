@@ -6,7 +6,8 @@ Este projeto possui uma base AWS alinhada ao diagrama publicado em `received-ban
 
 | Camada | Local | AWS |
 | --- | --- | --- |
-| Entrada de criacao de boleto | Docker/REST local | API Gateway REST API publicando em SQS |
+| Entrada de criacao de boleto | Docker/REST local | PJ Parceiro passa por WAF/API Gateway, que publica em SQS |
+| Entrada de retorno de pagamento | Endpoint simulador local | Cliente Pagador paga em PSP/Banco externo, que retorna webhook via WAF/API Gateway |
 | Entrada de consulta | Docker ports locais | ALB Ingress no EKS para `query-service` |
 | Compute | Containers Docker Compose | EKS |
 | Imagens | Build local | ECR por microservico |
@@ -21,100 +22,102 @@ Este projeto possui uma base AWS alinhada ao diagrama publicado em `received-ban
 
 ## Desenho executivo
 
-Visao horizontal, da esquerda para a direita, para documentacao da arquitetura:
+Visao horizontal, da esquerda para a direita, alinhada ao desenho Draw.io publicado:
 
 ```mermaid
 flowchart LR
-    C[Cliente / Canal Digital / Parceiro]
-
-    subgraph L1["1. Borda"]
-        R53[Route 53]
-        CF[CloudFront]
-        WAF[AWS WAF]
-        APIGW[API Gateway<br/>Auth + Throttling]
+    subgraph A["Atores externos"]
+        direction TB
+        PJ[PJ Parceiro<br/>emite boleto]
+        Pagador[Cliente Pagador<br/>paga boleto]
+        PSP[PSP / Banco<br/>processa pagamento]
     end
 
-    subgraph L2["2. Entrada Assincrona"]
-        SQS[SQS<br/>boleto-generation]
-        SQS_DLQ[SQS DLQ<br/>boleto-generation-dlq]
+    subgraph B["Borda segura"]
+        WAF[AWS WAF<br/>protecao + rate limit]
+        APIGW[API Gateway<br/>auth + throttling + routing]
     end
 
-    subgraph L3["3. Processamento - EKS"]
-        Boleto[boleto-service<br/>gera boleto]
-        OutboxWorker[Outbox Publisher<br/>publica eventos]
-        Payment[payment-service]
-        Notification[notification-service]
-        Query[query-service]
+    subgraph L1["Fluxo A - Emissao do boleto"]
+        direction LR
+        BoletoIn[SQS boleto-generation]
+        BoletoSvc[boleto-service<br/>gera boleto + outbox]
+        RDSWrite[(RDS PostgreSQL<br/>write model + outbox)]
+        S3[(S3<br/>PDFs de boleto)]
+        OutboxRelay[outbox-worker<br/>publica MSK]
     end
 
-    subgraph L4["4. Dados"]
+    subgraph L2["Fluxo B - Pagamento do boleto"]
+        direction LR
+        PaymentSvc[payment-service<br/>valida / efetiva pagamento]
         Redis[(ElastiCache Redis<br/>idempotencia)]
-        RDS[(RDS PostgreSQL<br/>ACID)]
-        Outbox[(outbox_events)]
-        S3[(S3<br/>PDFs / backups)]
     end
 
-    subgraph L5["5. Eventos"]
-        MSK[(Amazon MSK Kafka)]
-        T1[boleto.gerado]
-        T2[pagamento.efetivado]
-        T3[notificacao.enviada]
+    subgraph L3["Eventos e efeitos"]
+        direction LR
+        MSK[(Amazon MSK<br/>boleto.gerado<br/>pagamento.*<br/>notificacao.enviada)]
+        QuerySvc[query-service<br/>consume eventos]
+        NotificationSvc[notification-service<br/>consume eventos]
+        SNS[SNS / SES<br/>webhook / e-mail / SMS]
+        RDSRead[(RDS PostgreSQL<br/>read model CQRS)]
     end
 
-    subgraph L6["6. Falhas e Operacao"]
-        KafkaDLT[Kafka DLT por consumer]
-        Secrets[Secrets Manager]
-        CW[CloudWatch]
-        Trace[OpenTelemetry / X-Ray]
-        SNS[SNS / SES Alertas]
+    subgraph G["Servicos gerenciados AWS"]
+        direction TB
+        CW[CloudWatch<br/>logs / metricas / alarmes]
+        Secrets[Secrets Manager<br/>credenciais]
+        IAM[IAM + IRSA<br/>least privilege]
+        ECR[ECR<br/>imagens Docker]
     end
 
-    C --> R53 --> CF --> WAF --> APIGW
-    APIGW -->|POST /boletos<br/>202 Accepted| SQS
-    SQS -.apos retries.-> SQS_DLQ
-    SQS -->|long polling| Boleto
+    subgraph F["Falhas controladas"]
+        direction TB
+        BoletoDLQ[SQS DLQ boleto-generation]
+        KafkaDLT[Kafka DLT<br/>por consumer]
+    end
 
-    Boleto -->|idempotencyKey| Redis
-    Boleto -->|transacao| RDS
-    Boleto -->|mesma transacao| Outbox
-    Boleto -.PDF futuro.-> S3
+    PJ -->|POST /boletos| WAF --> APIGW
+    Pagador -->|paga boleto| PSP
+    PSP -->|webhook pagamento| WAF
 
-    OutboxWorker --> Outbox
-    OutboxWorker -->|boleto.gerado| MSK
-    MSK --> T1
-    T1 --> Payment
-    T1 --> Notification
-    T1 --> Query
+    APIGW -->|POST /boletos<br/>202 Accepted| BoletoIn
+    BoletoIn -->|long polling| BoletoSvc
+    BoletoIn -.falha.-> BoletoDLQ
 
-    Payment -->|pagamento.efetivado| MSK
-    MSK --> T2
-    T2 --> Notification
-    T2 --> Query
+    BoletoSvc -.PDF.-> S3
+    BoletoSvc -->|ACID + outbox| RDSWrite
+    RDSWrite -->|eventos pendentes| OutboxRelay
+    OutboxRelay -.boleto.gerado.-> MSK
 
-    Notification -->|notificacao.enviada| MSK
-    MSK --> T3
-    T3 --> Query
+    MSK -.consume boleto/pagamento.-> NotificationSvc
+    NotificationSvc --> SNS
+    SNS -.notifica emissao / pagamento.-> PJ
+    MSK -.consume eventos.-> QuerySvc
+    QuerySvc -->|projecao CQRS| RDSRead
 
-    Query -->|read model| RDS
+    APIGW -->|routes /webhook| PaymentSvc
+    PaymentSvc -.Idempotency-Key.-> Redis
+    PaymentSvc -->|atualiza status| RDSWrite
+    PaymentSvc -.pagamento.efetivado / rejeitado.-> MSK
+    MSK -.falha de consumo.-> KafkaDLT
 
-    Payment -.falha apos retries.-> KafkaDLT
-    Notification -.falha apos retries.-> KafkaDLT
-    Query -.falha apos retries.-> KafkaDLT
+    classDef actor fill:#eef6ff,stroke:#2563a8,color:#172033;
+    classDef gateway fill:#fff8ea,stroke:#b7791f,color:#172033;
+    classDef entry fill:#f7fff9,stroke:#17865a,color:#172033;
+    classDef service fill:#ffffff,stroke:#64748b,color:#172033;
+    classDef data fill:#eef2ff,stroke:#4f46e5,color:#172033;
+    classDef event fill:#fff1f8,stroke:#db2777,color:#172033;
+    classDef failure fill:#fff1f2,stroke:#be123c,color:#172033;
 
-    Secrets --> Boleto
-    Secrets --> Payment
-    Secrets --> Notification
-    Secrets --> Query
-
-    Boleto --> CW
-    Payment --> CW
-    Notification --> CW
-    Query --> CW
-    CW --> SNS
-    Boleto --> Trace
-    Payment --> Trace
-    Notification --> Trace
-    Query --> Trace
+    class PJ,Pagador,PSP actor;
+    class WAF,APIGW gateway;
+    class BoletoIn entry;
+    class BoletoSvc,PaymentSvc,NotificationSvc,QuerySvc service;
+    class RDSWrite,RDSRead,Redis,S3 data;
+    class OutboxRelay service;
+    class MSK,SNS event;
+    class BoletoDLQ,KafkaDLT failure;
+    class CW,Secrets,IAM,ECR service;
 ```
 
 ## Desenho simplificado
@@ -122,16 +125,25 @@ flowchart LR
 Versao curta para slide ou explicacao rapida:
 
 ```text
-Cliente
-  -> Route 53 / CloudFront / WAF
+PJ Parceiro
+  -> WAF
   -> API Gateway
   -> SQS boleto-generation
   -> boleto-service no EKS
-  -> RDS PostgreSQL + outbox_events
-  -> Outbox Publisher
-  -> Amazon MSK Kafka
-  -> payment-service / notification-service / query-service
-  -> RDS read model
+  -> RDS PostgreSQL + outbox_events + S3
+  -> outbox-worker
+  -> Amazon MSK
+  -> notification-service / query-service
+
+Cliente Pagador
+  -> PSP / Banco externo
+  -> WAF
+  -> API Gateway webhook
+  -> payment-service
+  -> RDS PostgreSQL + ElastiCache Redis
+  -> Amazon MSK
+  -> query-service / notification-service
+  -> SNS / SES
   -> CloudWatch + Tracing + Alertas
 ```
 
@@ -141,6 +153,7 @@ Cliente
 | --- | --- |
 | Entrada resiliente | API Gateway retornando `202 Accepted` e SQS absorvendo pico |
 | Retry e DLQ na entrada | SQS + `boleto-generation-dlq` |
+| Pagamento como estimulo externo | Cliente Pagador paga no PSP/Banco externo, que envia webhook pela borda segura |
 | Idempotencia | `Idempotency-Key` validada no Redis |
 | ACID | Gravacao do boleto no RDS PostgreSQL |
 | Consistencia banco/evento | Transactional Outbox com tabela `outbox_events` |
@@ -153,10 +166,14 @@ Cliente
 
 ```mermaid
 sequenceDiagram
-    participant C as Cliente
+    participant PJ as PJ Parceiro
+    participant CP as Cliente Pagador
+    participant PSP as PSP / Banco
+    participant WAF as AWS WAF
     participant G as API Gateway
     participant S as SQS boleto-generation
     participant B as boleto-service
+    participant Pay as payment-service
     participant O as outbox_events
     participant W as Outbox Publisher
     participant K as Amazon MSK Kafka
@@ -164,9 +181,10 @@ sequenceDiagram
     participant N as notification-service
     participant Q as query-service
 
-    C->>G: POST /boletos
+    PJ->>WAF: POST /boletos
+    WAF->>G: request autorizado
     G->>S: SendMessage(payload)
-    G-->>C: 202 Accepted
+    G-->>PJ: 202 Accepted
 
     B->>S: ReceiveMessage
     B->>B: CriarBoletoUseCase
@@ -184,6 +202,14 @@ sequenceDiagram
 
     K->>N: boleto.gerado
     N->>K: notificacao.enviada
+
+    CP->>PSP: paga boleto
+    PSP->>WAF: webhook de pagamento
+    WAF->>G: request autorizado
+    G->>Pay: routes /webhook
+    Pay->>K: pagamento.efetivado ou pagamento.rejeitado
+    K->>Q: atualiza status do pagamento
+    K->>N: notifica resultado
 ```
 
 ## Recursos criados por Terraform
@@ -205,6 +231,8 @@ Pasta: `infra/aws/terraform`
 - SNS para alertas
 - Secrets Manager para credenciais
 - CloudWatch Log Groups
+
+Observacao: o webhook de retorno de pagamento do PSP/Banco externo foi adicionado ao desenho de solucao como arquitetura alvo. O Terraform ainda precisa ser refinado em uma etapa posterior para provisionar essa rota/canal de integracao.
 
 ## Manifests Kubernetes AWS
 

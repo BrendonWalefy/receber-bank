@@ -529,6 +529,7 @@
         <a href="#arquitetura">Arquitetura AWS</a>
         <a href="#padroes">Padrões aplicados</a>
         <a href="#adr">Decisões arquiteturais</a>
+        <a href="review-entendimento.md">Review de entendimento</a>
         <a href="#servicos">Serviços</a>
         <a href="#apis">APIs</a>
         <a href="#local">Ambiente local</a>
@@ -582,12 +583,12 @@
       <section id="visao-geral" class="band">
         <div class="section-head">
           <h2>Visão Geral</h2>
-          <p>O Received Bank organiza o domínio de recebimentos em serviços independentes e integrados por eventos. A escrita de boletos fica isolada do read model de consulta, pagamentos são processados como estímulos externos e notificações reagem aos eventos publicados.</p>
+          <p>O Received Bank organiza o domínio de recebimentos em serviços independentes e integrados por eventos. A escrita de boletos fica isolada do read model de consulta, o pagamento vem de um PSP/Banco externo e notificações reagem aos eventos publicados.</p>
         </div>
         <div class="grid">
           <div class="card accent-teal">
             <strong>Domínio financeiro</strong>
-            <p>Fluxo completo de boleto: criação, registro simulado, pagamento, consulta e notificação.</p>
+            <p>Fluxo completo de boleto: emissão pelo PJ Parceiro, pagamento pelo Cliente Pagador, consulta e notificação.</p>
           </div>
           <div class="card accent-blue">
             <strong>Consistência sem dual write</strong>
@@ -599,7 +600,7 @@
           </div>
           <div class="card accent-green">
             <strong>Operação cloud-ready</strong>
-            <p>Arquitetura AWS com EKS, MSK, SQS, RDS, ElastiCache, WAF e CloudFront.</p>
+            <p>Arquitetura AWS com EKS, MSK, SQS, RDS, ElastiCache, WAF, S3 e SNS/SES.</p>
           </div>
         </div>
       </section>
@@ -617,7 +618,7 @@
             <tr><td>Linguagem e runtime</td><td>Java 21, Spring Boot 3.2, Spring Cloud</td></tr>
             <tr><td>Mensageria</td><td>Apache Kafka via Redpanda em ambiente local e Amazon MSK no desenho cloud</td></tr>
             <tr><td>Dados</td><td>PostgreSQL 16 para escrita, Outbox e read model; Redis 7 para idempotência</td></tr>
-            <tr><td>Cloud</td><td>AWS EKS, API Gateway, SQS, SNS, S3, CloudFront, WAF, RDS, ElastiCache e MSK</td></tr>
+            <tr><td>Cloud</td><td>AWS EKS, API Gateway, SQS, SNS/SES, S3, WAF, RDS, ElastiCache e MSK</td></tr>
             <tr><td>Infraestrutura como código</td><td>Terraform para provisionamento AWS e manifests Kubernetes para EKS</td></tr>
             <tr><td>Observabilidade e CI</td><td>Spring Actuator, health checks por serviço, Maven multi-module e GitHub Actions</td></tr>
           </tbody>
@@ -627,16 +628,16 @@
       <section id="fluxos" class="soft-band">
         <div class="section-head">
           <h2>Fluxo Operacional</h2>
-          <p>A jornada separa a criação do boleto, o registro externo simulado, a chegada do pagamento, a validação, a atualização do read model e a notificação final.</p>
+          <p>A jornada separa a emissão do boleto pelo PJ Parceiro, o pagamento no PSP/Banco externo, o webhook de retorno, a validação do pagamento, a atualização do read model e a notificação final.</p>
         </div>
         <div class="diagram-frame">
-          <img src="../assets/journey-flows.svg?v=20260505-5" alt="Fluxos das jornadas de emissão de boleto, registro externo, pagamento aprovado, pagamento rejeitado, consulta e notificação.">
+          <img src="../assets/journey-flows.svg?v=20260511-1" alt="Fluxos das jornadas de emissão de boleto, registro externo, retorno externo de pagamento, consulta e notificação.">
         </div>
         <div class="flow" style="margin-top:22px">
-          <div class="step"><strong>1. Criação</strong><span>Cliente PJ envia <code>POST /boletos</code> e o <code>boleto-service</code> cria o agregado.</span></div>
+          <div class="step"><strong>1. Emissão</strong><span>PJ Parceiro envia <code>POST /boletos</code> e o <code>boleto-service</code> cria o agregado.</span></div>
           <div class="step"><strong>2. Outbox</strong><span>Boleto e evento <code>boleto.gerado</code> são persistidos na mesma transação.</span></div>
           <div class="step"><strong>3. Registro</strong><span>A registradora bancária é simulada via <code>/simulacoes/registradora/boletos</code>.</span></div>
-          <div class="step"><strong>4. Pagamento</strong><span>O pagamento chega por <code>/simulacoes/pagamentos</code>, como retorno externo.</span></div>
+          <div class="step"><strong>4. Retorno</strong><span>PSP/Banco externo envia webhook de pagamento pela borda/API antes do <code>payment-service</code>.</span></div>
           <div class="step"><strong>5. Validação</strong><span>Valor pago e vencimento determinam aprovação ou rejeição.</span></div>
           <div class="step"><strong>6. Consulta</strong><span><code>query-service</code> atualiza o read model a partir dos eventos.</span></div>
           <div class="step"><strong>7. Notificação</strong><span><code>notification-service</code> publica <code>notificacao.enviada</code>.</span></div>
@@ -646,22 +647,22 @@
       <section id="arquitetura" class="band">
         <div class="section-head">
           <h2>Arquitetura AWS</h2>
-          <p>O desenho organiza borda, entrada assíncrona, compute, dados, eventos, segurança e observabilidade em uma topologia pronta para evoluir de ambiente local para cloud.</p>
+          <p>O desenho organiza PJ Parceiro, Cliente Pagador, PSP/Banco externo, borda segura, SQS, EKS, MSK, dados, serviços gerenciados e fluxos numerados de emissão e pagamento.</p>
         </div>
         <div class="diagram-frame">
-          <img src="../assets/aws-reference-architecture.svg?v=20260506-1" alt="Diagrama de arquitetura AWS do Received Bank com Route 53, CloudFront, WAF, API Gateway, SQS, EKS, microsserviços, RDS, ElastiCache, MSK, CloudWatch e Secrets Manager.">
+          <img src="../assets/aws-reference-architecture.svg?v=20260511-2" alt="Diagrama de arquitetura AWS do Received Bank com PJ Parceiro, Cliente Pagador, PSP/Banco externo, AWS WAF, API Gateway, SQS, EKS, MSK, RDS, ElastiCache, S3, SNS/SES, CloudWatch, Secrets Manager, IAM/IRSA e ECR.">
         </div>
         <table style="margin-top:22px">
           <thead>
             <tr><th>Camada</th><th>Local</th><th>AWS</th></tr>
           </thead>
           <tbody>
-            <tr><td>Borda e segurança</td><td>REST local direto</td><td>Route 53, CloudFront, AWS WAF e API Gateway</td></tr>
-            <tr><td>Entrada assíncrona</td><td>Chamadas REST para os serviços</td><td>SQS <code>boleto-generation</code> com DLQ</td></tr>
+            <tr><td>Borda e segurança</td><td>REST local direto</td><td>AWS WAF e API Gateway para emissão de boleto e webhook de pagamento</td></tr>
+            <tr><td>Entrada assíncrona</td><td>Chamadas REST para os serviços</td><td>SQS <code>boleto-generation</code> com DLQ para emissão de boletos</td></tr>
             <tr><td>Compute</td><td>Docker Compose</td><td>Amazon EKS com quatro microsserviços e outbox worker</td></tr>
             <tr><td>Dados</td><td>PostgreSQL e Redis em containers</td><td>RDS PostgreSQL e ElastiCache Redis</td></tr>
             <tr><td>Eventos</td><td>Redpanda compatível com Kafka</td><td>Amazon MSK</td></tr>
-            <tr><td>Segredos e observabilidade</td><td>Variáveis de ambiente e Actuator</td><td>Secrets Manager, IAM/IRSA, CloudWatch, SNS e OpenTelemetry</td></tr>
+            <tr><td>Serviços gerenciados</td><td>Variáveis de ambiente e Actuator</td><td>CloudWatch, Secrets Manager, IAM/IRSA, ECR e SNS/SES</td></tr>
           </tbody>
         </table>
       </section>
@@ -686,7 +687,7 @@
           </div>
           <div class="card accent-green">
             <strong>Resiliência e idempotência</strong>
-            <p>SQS absorve picos na entrada, DLQ isola falhas, Kafka DLT apoia reprocessamento e Redis valida <code>Idempotency-Key</code>.</p>
+            <p>SQS absorve picos na emissão, DLQ isola falhas, Kafka DLT apoia reprocessamento e Redis sustenta idempotência.</p>
           </div>
         </div>
       </section>
@@ -713,6 +714,12 @@
             <strong>ADR-004 · Arquitetura Hexagonal</strong>
             <p>Casos de uso testáveis sem Spring, banco ou Kafka, com adapters substituíveis.</p>
           </div>
+          <a class="card asset-link accent-blue" href="review-entendimento.md">
+            <span>
+              <strong>Review de entendimento</strong>
+              <small>Roteiro técnico para explicar os porquês do projeto em entrevista ou apresentação.</small>
+            </span>
+          </a>
         </div>
         <p class="muted" style="margin-top:18px">Arquivo completo: <code>received-bank-services/docs/architecture/ARCHITECTURE_DECISION_RECORD.md</code></p>
       </section>
@@ -730,7 +737,7 @@
             <tr>
               <td class="service-name">boleto-service</td>
               <td><code>8081</code></td>
-              <td>Cria e consulta boletos no modelo de escrita, aplica regras de domínio, valida idempotência e grava eventos no Outbox.</td>
+              <td>Cria e consulta boletos no modelo de escrita, aplica regras de domínio e grava eventos no Outbox.</td>
               <td>Produz <code>boleto.gerado</code></td>
             </tr>
             <tr>
@@ -742,7 +749,7 @@
             <tr>
               <td class="service-name">payment-service</td>
               <td><code>8083</code></td>
-              <td>Consome boletos gerados, recebe estímulos externos de pagamento e valida valor e vencimento.</td>
+              <td>Consome boletos gerados, recebe webhook de pagamento vindo do PSP/Banco externo e valida valor e vencimento.</td>
               <td>Produz <code>pagamento.efetivado</code> ou <code>pagamento.rejeitado</code></td>
             </tr>
             <tr>
@@ -768,7 +775,7 @@
             <tr><td><code>POST</code></td><td><code>/boletos</code></td><td>boleto-service</td><td>Cria um boleto e retorna <code>201 Created</code>.</td></tr>
             <tr><td><code>GET</code></td><td><code>/boletos/{id}</code></td><td>boleto-service</td><td>Consulta um boleto pelo identificador no modelo de escrita.</td></tr>
             <tr><td><code>POST</code></td><td><code>/simulacoes/registradora/boletos</code></td><td>boleto-service</td><td>Simula registro externo de boleto.</td></tr>
-            <tr><td><code>POST</code></td><td><code>/simulacoes/pagamentos</code></td><td>payment-service</td><td>Simula chegada de pagamento externo.</td></tr>
+            <tr><td><code>POST</code></td><td><code>/simulacoes/pagamentos</code></td><td>payment-service</td><td>Simula, localmente, o webhook de pagamento que viria do PSP/Banco externo.</td></tr>
             <tr><td><code>GET</code></td><td><code>/consultas/boletos</code></td><td>query-service</td><td>Lista boletos do read model, com filtro opcional por status.</td></tr>
             <tr><td><code>GET</code></td><td><code>/consultas/boletos/{boletoId}</code></td><td>query-service</td><td>Consulta um boleto no read model.</td></tr>
           </tbody>
@@ -808,7 +815,7 @@ docker compose up --build</code></pre>
       <section id="colecoes" class="soft-band">
         <div class="section-head">
           <h2>Coleções de API</h2>
-          <p>Importe uma das coleções para executar a jornada completa: health checks, criação do boleto, registro externo simulado, pagamento aprovado, consulta CQRS e cenário de rejeição por regra de negócio.</p>
+          <p>Importe uma das coleções para executar a jornada completa: health checks, emissão do boleto, retorno simulado de pagamento aprovado, consulta CQRS e cenário de rejeição por regra de negócio.</p>
         </div>
         <div class="two-grid">
           <a class="card asset-link accent-blue" href="../api/received-bank.postman_collection.json" download>

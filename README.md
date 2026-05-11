@@ -14,7 +14,7 @@ O projeto nasceu do interesse em entender como patterns como DDD, Hexagonal Arch
 | **Linguagem & Runtime** | Java 21 (virtual threads), Spring Boot 3.2, Spring Cloud |
 | **Mensageria** | Apache Kafka via Redpanda (local) / Amazon MSK (cloud) |
 | **Bancos de Dados** | PostgreSQL 16 (escrita + Outbox), Redis 7 (idempotência) |
-| **Infraestrutura Cloud** | AWS EKS, API Gateway, SQS, SNS, S3, CloudFront, WAF, RDS, ElastiCache |
+| **Infraestrutura Cloud** | AWS EKS, API Gateway, SQS, SNS/SES, S3, WAF, RDS, ElastiCache |
 | **Infraestrutura como Código** | Terraform (provisionamento AWS), Kubernetes (manifests EKS) |
 | **Observabilidade** | Spring Actuator, health checks por serviço |
 | **Build & CI** | Maven (multi-module), GitHub Actions |
@@ -32,7 +32,7 @@ O projeto nasceu do interesse em entender como patterns como DDD, Hexagonal Arch
 | **Event-Driven Architecture** | Amazon MSK (Kafka) desacopla todos os domínios. Serviços publicam e consomem eventos sem chamadas síncronas entre si. |
 | **Resiliência** | SQS absorve picos na entrada (API Gateway → SQS → boleto-service). DLQ isola mensagens com falha. Kafka DLT por consumer com retry e backoff configurável. |
 | **Idempotência** | `Idempotency-Key` validada no ElastiCache Redis antes de processar cada mensagem, prevenindo duplicatas em reprocessamentos. |
-| **Segurança em Camadas** | CloudFront → AWS WAF → API Gateway → IAM/IRSA por service account no EKS → Secrets Manager para credenciais. |
+| **Segurança em Camadas** | AWS WAF → API Gateway → IAM/IRSA por service account no EKS → Secrets Manager para credenciais. |
 
 Decisões de design detalhadas estão documentadas em [`received-bank-services/docs/architecture/ARCHITECTURE_DECISION_RECORD.md`](received-bank-services/docs/architecture/ARCHITECTURE_DECISION_RECORD.md).
 
@@ -46,7 +46,7 @@ O projeto é organizado como um conjunto de microsserviços Maven em `received-b
 |---|---|---|
 | `boleto-service` | `8081` | Cria e consulta boletos no modelo de escrita, aplica regras de domínio e publica eventos via Transactional Outbox. |
 | `query-service` | `8082` | Mantém e expõe o read model de boletos para consultas. |
-| `payment-service` | `8083` | Consome boletos gerados e simula/efetiva pagamentos, publicando `pagamento.efetivado`. |
+| `payment-service` | `8083` | Consome boletos gerados, recebe webhook/retorno de pagamento vindo de PSP/Banco externo e publica `pagamento.efetivado` ou `pagamento.rejeitado`. |
 | `notification-service` | `8084` | Consome eventos de boleto e pagamento, envia notificações e publica `notificacao.enviada`. |
 
 Infraestrutura local:
@@ -102,10 +102,10 @@ docker compose up --build
 
 **Fluxo completo:**
 
-1. O Cliente PJ solicita a criação do boleto no `boleto-service`.
+1. O PJ Parceiro solicita a criação do boleto no `boleto-service`.
 2. O boleto é persistido e publicado como evento `boleto.gerado` via Outbox.
 3. A registradora externa pode ser simulada via `/simulacoes/registradora/boletos`.
-4. O `payment-service` aguarda um estímulo externo de pagamento em `/simulacoes/pagamentos`.
+4. O Cliente Pagador paga o boleto em um PSP/Banco externo, e esse retorno é simulado em `/simulacoes/pagamentos`.
 5. O pagamento é validado por valor e vencimento.
 6. Pagamentos válidos publicam `pagamento.efetivado`; inválidos publicam `pagamento.rejeitado`.
 7. O `query-service` atualiza o read model e o `notification-service` emite notificações do resultado.

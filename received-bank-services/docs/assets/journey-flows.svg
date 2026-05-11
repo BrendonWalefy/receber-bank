@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1680" height="1180" viewBox="0 0 1680 1180" role="img" aria-labelledby="title desc">
   <title id="title">Received Bank - Fluxos das jornadas</title>
-  <desc id="desc">Fluxos separados para explicar as jornadas de emissao de boleto, registro externo, pagamento aprovado, pagamento rejeitado, consulta e notificacao.</desc>
+  <desc id="desc">Fluxos separados para explicar as jornadas de emissao de boleto, registro externo, retorno externo de pagamento, consulta e notificacao.</desc>
   <defs>
     <style>
       .bg { fill: #f7f8fb; }
@@ -88,46 +88,54 @@
   <rect x="56" y="480" width="1568" height="145" class="journey journey-green"/>
   <text x="86" y="514" class="h">3. Pagamento aprovado</text>
   <rect x="86" y="534" width="210" height="64" class="box box-blue"/>
-  <text x="110" y="560" class="label">Estimulo externo</text>
+  <text x="110" y="560" class="label">Banco Pagador / CIP</text>
   <text x="110" y="582" class="small">webhook / CNAB / API</text>
-  <rect x="366" y="534" width="220" height="64" class="box box-green"/>
-  <text x="390" y="560" class="label">payment-service</text>
-  <text x="390" y="582" class="small">busca boleto aguardando</text>
-  <rect x="656" y="534" width="240" height="64" class="box box-green"/>
-  <text x="680" y="560" class="label">Valida regra</text>
-  <text x="680" y="582" class="small">valor total + vencimento</text>
-  <rect x="966" y="534" width="220" height="64" class="box box-orange"/>
-  <text x="990" y="560" class="label">MSK</text>
-  <text x="990" y="582" class="small">pagamento.efetivado</text>
-  <rect x="1256" y="534" width="240" height="64" class="box box-blue"/>
-  <text x="1280" y="560" class="label">Read model + notificacao</text>
-  <text x="1280" y="582" class="small">status PAGO e aviso PJ</text>
-  <path d="M296 566 H366" class="arrow"/>
-  <path d="M586 566 H656" class="arrow"/>
-  <path d="M896 566 H966" class="event"/>
-  <path d="M1186 566 H1256" class="event"/>
+  <rect x="336" y="534" width="190" height="64" class="box box-blue"/>
+  <text x="360" y="560" class="label">Borda / API</text>
+  <text x="360" y="582" class="small">seguranca + entrada</text>
+  <rect x="566" y="534" width="210" height="64" class="box box-green"/>
+  <text x="590" y="560" class="label">payment-service</text>
+  <text x="590" y="582" class="small">recebe retorno externo</text>
+  <rect x="816" y="534" width="220" height="64" class="box box-green"/>
+  <text x="840" y="560" class="label">Valida regra</text>
+  <text x="840" y="582" class="small">valor total + vencimento</text>
+  <rect x="1076" y="534" width="190" height="64" class="box box-orange"/>
+  <text x="1100" y="560" class="label">MSK</text>
+  <text x="1100" y="582" class="small">pagamento.efetivado</text>
+  <rect x="1306" y="534" width="240" height="64" class="box box-blue"/>
+  <text x="1330" y="560" class="label">Read model + notificacao</text>
+  <text x="1330" y="582" class="small">status PAGO e aviso PJ</text>
+  <path d="M296 566 H336" class="arrow"/>
+  <path d="M526 566 H566" class="arrow"/>
+  <path d="M776 566 H816" class="arrow"/>
+  <path d="M1036 566 H1076" class="event"/>
+  <path d="M1266 566 H1306" class="event"/>
 
   <rect x="56" y="655" width="1568" height="145" class="journey journey-red"/>
   <text x="86" y="689" class="h">4. Pagamento rejeitado</text>
   <rect x="86" y="709" width="210" height="64" class="box box-blue"/>
-  <text x="110" y="735" class="label">Estimulo externo</text>
+  <text x="110" y="735" class="label">Banco Pagador / CIP</text>
   <text x="110" y="757" class="small">valor/data recebidos</text>
-  <rect x="366" y="709" width="220" height="64" class="box box-green"/>
-  <text x="390" y="735" class="label">payment-service</text>
-  <text x="390" y="757" class="small">aplica validacoes</text>
-  <rect x="656" y="709" width="240" height="64" class="box box-red"/>
-  <text x="680" y="735" class="label">Falha de regra</text>
-  <text x="680" y="757" class="small">valor divergente ou vencido</text>
-  <rect x="966" y="709" width="220" height="64" class="box box-red"/>
-  <text x="990" y="735" class="label">MSK</text>
-  <text x="990" y="757" class="small">pagamento.rejeitado</text>
-  <rect x="1256" y="709" width="240" height="64" class="box box-gray"/>
-  <text x="1280" y="735" class="label">Read model + notificacao</text>
-  <text x="1280" y="757" class="small">motivo visivel ao cliente</text>
-  <path d="M296 741 H366" class="arrow"/>
-  <path d="M586 741 H656" class="arrow"/>
-  <path d="M896 741 H966" class="reject"/>
-  <path d="M1186 741 H1256" class="reject"/>
+  <rect x="336" y="709" width="190" height="64" class="box box-blue"/>
+  <text x="360" y="735" class="label">Borda / API</text>
+  <text x="360" y="757" class="small">seguranca + entrada</text>
+  <rect x="566" y="709" width="210" height="64" class="box box-green"/>
+  <text x="590" y="735" class="label">payment-service</text>
+  <text x="590" y="757" class="small">valida retorno externo</text>
+  <rect x="816" y="709" width="220" height="64" class="box box-red"/>
+  <text x="840" y="735" class="label">Falha de regra</text>
+  <text x="840" y="757" class="small">valor divergente ou vencido</text>
+  <rect x="1076" y="709" width="190" height="64" class="box box-red"/>
+  <text x="1100" y="735" class="label">MSK</text>
+  <text x="1100" y="757" class="small">pagamento.rejeitado</text>
+  <rect x="1306" y="709" width="240" height="64" class="box box-gray"/>
+  <text x="1330" y="735" class="label">Read model + notificacao</text>
+  <text x="1330" y="757" class="small">motivo visivel ao cliente</text>
+  <path d="M296 741 H336" class="arrow"/>
+  <path d="M526 741 H566" class="arrow"/>
+  <path d="M776 741 H816" class="arrow"/>
+  <path d="M1036 741 H1076" class="reject"/>
+  <path d="M1266 741 H1306" class="reject"/>
 
   <rect x="56" y="830" width="740" height="240" class="journey"/>
   <text x="86" y="864" class="h">5. Consulta operacional</text>
